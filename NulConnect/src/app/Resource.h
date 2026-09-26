@@ -1,0 +1,11 @@
+#pragma once
+
+#define IDI_APP 101
+
+#define NC_VERSION_MAJOR 0
+#define NC_VERSION_MINOR 1
+#define NC_VERSION_PATCH 0
+#define NC_VERSION_BUILD 1
+#define NC_VERSION_STRING "0.1.0"
+#define NC_VERSION_WSTRING L"0.1.0"
+#define NC_BUILD_WSTRING L"1"

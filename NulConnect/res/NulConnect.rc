@@ -1,0 +1,37 @@
+#pragma code_page(65001)
+
+#include <winres.h>
+#include "app/Resource.h"
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
+IDI_APP ICON "NulConnect.ico"
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION NC_VERSION_MAJOR, NC_VERSION_MINOR, NC_VERSION_PATCH, NC_VERSION_BUILD
+ PRODUCTVERSION NC_VERSION_MAJOR, NC_VERSION_MINOR, NC_VERSION_PATCH, NC_VERSION_BUILD
+ FILEFLAGSMASK 0x3fL
+ FILEFLAGS 0x0L
+ FILEOS VOS_NT_WINDOWS32
+ FILETYPE VFT_APP
+ FILESUBTYPE VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "000004b0"
+        BEGIN
+            VALUE "CompanyName", "NulStudio"
+            VALUE "FileDescription", "NulConnect"
+            VALUE "FileVersion", NC_VERSION_STRING
+            VALUE "InternalName", "NulConnect"
+            VALUE "LegalCopyright", "Copyright (C) NulStudio 2014-2026. Licensed under the GNU AGPL v3.0."
+            VALUE "OriginalFilename", "NulConnect.exe"
+            VALUE "ProductName", "NulConnect"
+            VALUE "ProductVersion", NC_VERSION_STRING
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0, 1200
+    END
+END

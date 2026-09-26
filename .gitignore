@@ -1,0 +1,13 @@
+# Build output
+/build/
+
+# Prebuilt dependencies, fetched by tools/update-dependencies.ps1
+/lib/
+
+# Visual Studio
+.vs/
+*.vcxproj.user
+*.aps
+
+# Python
+__pycache__/

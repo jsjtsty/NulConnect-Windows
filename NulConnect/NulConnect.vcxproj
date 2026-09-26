@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>18.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{47f38fe0-ed23-4794-9a17-4cc2787280c1}</ProjectGuid>
+    <RootNamespace>NulConnect</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros">
+    <NcLibDir>$(SolutionDir)lib\</NcLibDir>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OutDir>$(SolutionDir)build\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\obj\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/utf-8 /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(NcLibDir)libreatrust-windows-x86_64;$(NcLibDir)nlohmann;$(NcLibDir)webview2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_WINDOWS;UNICODE;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DisableSpecificWarnings>4100;4201;4324</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(NcLibDir)libreatrust-windows-x86_64;$(NcLibDir)webview2\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>reatrust.dll.lib;WebView2LoaderStatic.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;dwmapi.lib;uxtheme.lib;imm32.lib;shlwapi.lib;comctl32.lib;iphlpapi.lib;ws2_32.lib;wininet.lib;winhttp.lib;version.lib;delayimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <!-- Delay-loaded so an unsupported system gets a readable error instead of a loader failure. -->
+      <DelayLoadDLLs>reatrust.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
+    </Link>
+    <Manifest>
+      <AdditionalManifestFiles>$(ProjectDir)res\NulConnect.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
+    </Manifest>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)res;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <PostBuildEvent>
+      <Command>xcopy /y /d "$(NcLibDir)libreatrust-windows-x86_64\reatrust.dll" "$(OutDir)" &gt;nul
+xcopy /y /d "$(NcLibDir)nulconnect-helper-windows-x86_64\nulconnect-helper.exe" "$(OutDir)" &gt;nul
+xcopy /y /d "$(NcLibDir)wintun\bin\amd64\wintun.dll" "$(OutDir)" &gt;nul</Command>
+      <Message>Copying runtime dependencies</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
+    <ClCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
+    <ClCompile>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <!-- Static CRT: no VC++ redistributable needed on the target machine. -->
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\pch.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\app\*.cpp" />
+    <ClCompile Include="src\atr\*.cpp" />
+    <ClCompile Include="src\core\*.cpp" />
+    <ClCompile Include="src\model\*.cpp" />
+    <ClCompile Include="src\ui\*.cpp" />
+    <ClCompile Include="src\windows\*.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\*.h" />
+    <ClInclude Include="src\app\*.h" />
+    <ClInclude Include="src\atr\*.h" />
+    <ClInclude Include="src\core\*.h" />
+    <ClInclude Include="src\model\*.h" />
+    <ClInclude Include="src\ui\*.h" />
+    <ClInclude Include="src\windows\*.h" />
+    <None Include="src\core\Localization.generated.inc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="res\NulConnect.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\NulConnect.ico" />
+    <Manifest Include="res\NulConnect.manifest" />
+    <None Include="res\strings-windows.json" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <!-- lib\ is not committed: fetch the prebuilt dependencies on the first build. -->
+  <Target Name="NcFetchDependencies" BeforeTargets="PrepareForBuild"
+          Condition="!Exists('$(NcLibDir)libreatrust-windows-x86_64\.version') Or !Exists('$(NcLibDir)nulconnect-helper-windows-x86_64\.version') Or !Exists('$(NcLibDir)wintun\.version') Or !Exists('$(NcLibDir)webview2\.version') Or !Exists('$(NcLibDir)nlohmann\.version')">
+    <Message Importance="high" Text="Downloading dependencies into $(NcLibDir)" />
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(SolutionDir)tools\update-dependencies.ps1&quot;" />
+  </Target>
+</Project>

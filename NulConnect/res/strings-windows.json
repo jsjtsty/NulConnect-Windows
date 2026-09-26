@@ -1,0 +1,274 @@
+{
+  "// note": "Windows-specific strings and overrides of macOS wording. Run tools/gen-localization.py after editing.",
+  "This removes the privileged component, LaunchDaemon, and state files. Install it again to use system proxy or VPN mode.": {
+    "en": "This removes the NulConnect Helper service and its state files. Install it again to use VPN mode.",
+    "zh-Hans": "这将移除 NulConnect Helper 服务及其状态文件。如需使用 VPN 模式，请重新安装。",
+    "zh-Hant": "這將移除 NulConnect Helper 服務及其狀態檔案。如需使用 VPN 模式，請重新安裝。",
+    "ja": "NulConnect Helper サービスとその状態ファイルを削除します。VPN モードを使用するには再インストールしてください。",
+    "de": "Dadurch werden der Dienst „NulConnect Helper“ und seine Statusdateien entfernt. Installieren Sie ihn erneut, um den VPN-Modus zu verwenden.",
+    "fr": "Cela supprime le service NulConnect Helper et ses fichiers d’état. Réinstallez-le pour utiliser le mode VPN.",
+    "es": "Esto elimina el servicio NulConnect Helper y sus archivos de estado. Vuelva a instalarlo para usar el modo VPN."
+  },
+  "Install the helper on the Privileged Component tab first": {
+    "en": "Install the helper on the Privileged Component page first",
+    "zh-Hans": "请先在“特权组件”页面安装辅助服务",
+    "zh-Hant": "請先在「特權元件」頁面安裝輔助服務",
+    "ja": "先に「特権コンポーネント」ページでヘルパーをインストールしてください",
+    "de": "Installieren Sie zuerst den Helfer auf der Seite „Privilegierte Komponente“",
+    "fr": "Installez d’abord l’assistant depuis la page Composant privilégié",
+    "es": "Instale primero el asistente en la página Componente privilegiado"
+  },
+  "%1$@ address ranges · %2$@ domains": {
+    "en": "%1$@ address ranges · %2$@ domains",
+    "zh-Hans": "%1$@ 个地址段 · %2$@ 个域名",
+    "zh-Hant": "%1$@ 個位址範圍 · %2$@ 個網域",
+    "ja": "%1$@ 個のアドレス範囲 · %2$@ 個のドメイン",
+    "de": "%1$@ Adressbereiche · %2$@ Domänen",
+    "fr": "%1$@ plages d’adresses · %2$@ domaines",
+    "es": "%1$@ rangos de direcciones · %2$@ dominios"
+  },
+  "Administrator authorization was cancelled.": {
+    "en": "Administrator authorization was cancelled.",
+    "zh-Hans": "管理员授权已取消。",
+    "zh-Hant": "已取消管理員授權。",
+    "ja": "管理者の承認がキャンセルされました。",
+    "de": "Die Administratorautorisierung wurde abgebrochen.",
+    "fr": "L’autorisation administrateur a été annulée.",
+    "es": "Se canceló la autorización de administrador."
+  },
+  "Close": {"en": "Close", "zh-Hans": "关闭", "zh-Hant": "關閉", "ja": "閉じる", "de": "Schließen", "fr": "Fermer", "es": "Cerrar"},
+  "Closing the window keeps NulConnect and the connection running.": {
+    "en": "Closing the window keeps NulConnect and the connection running.",
+    "zh-Hans": "关闭窗口后，NulConnect 和当前连接将继续运行。",
+    "zh-Hant": "關閉視窗後，NulConnect 與目前連線會繼續執行。",
+    "ja": "ウインドウを閉じても NulConnect と接続は動作し続けます。",
+    "de": "Beim Schließen des Fensters laufen NulConnect und die Verbindung weiter.",
+    "fr": "La fermeture de la fenêtre laisse NulConnect et la connexion actifs.",
+    "es": "Al cerrar la ventana, NulConnect y la conexión siguen activos."
+  },
+  "Connection": {"en": "Connection", "zh-Hans": "连接", "zh-Hant": "連線", "ja": "接続", "de": "Verbindung", "fr": "Connexion", "es": "Conexión"},
+  "Could not start the embedded browser.": {
+    "en": "Could not start the embedded browser.",
+    "zh-Hans": "无法启动内置浏览器。",
+    "zh-Hant": "無法啟動內建瀏覽器。",
+    "ja": "埋め込みブラウザーを起動できませんでした。",
+    "de": "Der eingebettete Browser konnte nicht gestartet werden.",
+    "fr": "Impossible de démarrer le navigateur intégré.",
+    "es": "No se pudo iniciar el navegador integrado."
+  },
+  "Cut": {"en": "Cut", "zh-Hans": "剪切", "zh-Hant": "剪下", "ja": "切り取り", "de": "Ausschneiden", "fr": "Couper", "es": "Cortar"},
+  "Paste": {"en": "Paste", "zh-Hans": "粘贴", "zh-Hant": "貼上", "ja": "貼り付け", "de": "Einfügen", "fr": "Coller", "es": "Pegar"},
+  "Select All": {"en": "Select All", "zh-Hans": "全选", "zh-Hant": "全選", "ja": "すべて選択", "de": "Alles auswählen", "fr": "Tout sélectionner", "es": "Seleccionar todo"},
+  "Diagnostic logs never contain passwords, tickets or session keys.": {
+    "en": "Diagnostic logs never contain passwords, tickets or session keys.",
+    "zh-Hans": "诊断日志不会包含密码、登录票据或会话密钥。",
+    "zh-Hant": "診斷記錄不會包含密碼、登入票證或工作階段金鑰。",
+    "ja": "診断ログにパスワード、チケット、セッションキーが含まれることはありません。",
+    "de": "Diagnoseprotokolle enthalten niemals Passwörter, Tickets oder Sitzungsschlüssel.",
+    "fr": "Les journaux de diagnostic ne contiennent jamais de mots de passe, tickets ni clés de session.",
+    "es": "Los registros de diagnóstico nunca contienen contraseñas, tickets ni claves de sesión."
+  },
+  "General": {"en": "General", "zh-Hans": "常规", "zh-Hant": "一般", "ja": "全般", "de": "Allgemein", "fr": "Général", "es": "General"},
+  "HTTP and SOCKS5 proxy on 127.0.0.1.": {
+    "en": "HTTP and SOCKS5 proxy on 127.0.0.1.",
+    "zh-Hans": "在 127.0.0.1 上提供 HTTP 和 SOCKS5 代理。",
+    "zh-Hant": "在 127.0.0.1 上提供 HTTP 與 SOCKS5 代理。",
+    "ja": "127.0.0.1 で HTTP と SOCKS5 のプロキシを提供します。",
+    "de": "HTTP- und SOCKS5-Proxy auf 127.0.0.1.",
+    "fr": "Proxy HTTP et SOCKS5 sur 127.0.0.1.",
+    "es": "Proxy HTTP y SOCKS5 en 127.0.0.1."
+  },
+  "Home": {"en": "Home", "zh-Hans": "主页", "zh-Hant": "首頁", "ja": "ホーム", "de": "Start", "fr": "Accueil", "es": "Inicio"},
+  "Host name of the secure access portal.": {
+    "en": "Host name of the secure access portal.",
+    "zh-Hans": "安全访问门户的主机名。",
+    "zh-Hant": "安全存取入口網站的主機名稱。",
+    "ja": "セキュアアクセスポータルのホスト名です。",
+    "de": "Hostname des Portals für sicheren Zugriff.",
+    "fr": "Nom d’hôte du portail d’accès sécurisé.",
+    "es": "Nombre de host del portal de acceso seguro."
+  },
+  "Install WebView2 Runtime": {
+    "en": "Install WebView2 Runtime",
+    "zh-Hans": "安装 WebView2 运行时",
+    "zh-Hant": "安裝 WebView2 執行階段",
+    "ja": "WebView2 ランタイムをインストール",
+    "de": "WebView2-Runtime installieren",
+    "fr": "Installer le runtime WebView2",
+    "es": "Instalar el runtime de WebView2"
+  },
+  "Install the privileged component to enable VPN mode. Installation is not recommended unless needed.": {
+    "en": "Install the privileged component to enable VPN mode. Installation is not recommended unless needed.",
+    "zh-Hans": "安装特权组件以启用 VPN 模式。如非必要，不建议安装。",
+    "zh-Hant": "安裝特權元件以啟用 VPN 模式。如非必要，不建議安裝。",
+    "ja": "VPN モードを有効にするには特権コンポーネントをインストールします。必要な場合を除き、インストールはお勧めしません。",
+    "de": "Installieren Sie die privilegierte Komponente, um den VPN-Modus zu aktivieren. Die Installation wird nur bei Bedarf empfohlen.",
+    "fr": "Installez le composant privilégié pour activer le mode VPN. L’installation n’est recommandée qu’en cas de besoin.",
+    "es": "Instale el componente privilegiado para habilitar el modo VPN. No se recomienda instalarlo salvo que sea necesario."
+  },
+  "Installing the privileged component requires administrator access and registers a Windows service. Continue only if you need VPN mode.": {
+    "en": "Installing the privileged component requires administrator access and registers a Windows service. Continue only if you need VPN mode.",
+    "zh-Hans": "安装特权组件需要管理员权限，并会注册一个 Windows 服务。仅在需要 VPN 模式时继续。",
+    "zh-Hant": "安裝特權元件需要管理員權限，並會註冊一個 Windows 服務。僅在需要 VPN 模式時繼續。",
+    "ja": "特権コンポーネントのインストールには管理者権限が必要で、Windows サービスが登録されます。VPN モードが必要な場合のみ続行してください。",
+    "de": "Die Installation der privilegierten Komponente erfordert Administratorrechte und registriert einen Windows-Dienst. Fahren Sie nur fort, wenn Sie den VPN-Modus benötigen.",
+    "fr": "L’installation du composant privilégié nécessite des droits administrateur et enregistre un service Windows. Ne continuez que si vous avez besoin du mode VPN.",
+    "es": "La instalación del componente privilegiado requiere permisos de administrador y registra un servicio de Windows. Continúe solo si necesita el modo VPN."
+  },
+  "Keep running in the notification area": {
+    "en": "Keep running in the notification area",
+    "zh-Hans": "在通知区域中保持运行",
+    "zh-Hant": "在通知區域中持續執行",
+    "ja": "通知領域で実行を続ける",
+    "de": "Im Infobereich weiter ausführen",
+    "fr": "Continuer à s’exécuter dans la zone de notification",
+    "es": "Seguir ejecutándose en el área de notificación"
+  },
+  "Launch NulConnect in the notification area when you sign in.": {
+    "en": "Launch NulConnect in the notification area when you sign in.",
+    "zh-Hans": "登录 Windows 时在通知区域中启动 NulConnect。",
+    "zh-Hant": "登入 Windows 時在通知區域中啟動 NulConnect。",
+    "ja": "サインイン時に NulConnect を通知領域で起動します。",
+    "de": "NulConnect bei der Anmeldung im Infobereich starten.",
+    "fr": "Lancer NulConnect dans la zone de notification à l’ouverture de session.",
+    "es": "Iniciar NulConnect en el área de notificación al iniciar sesión."
+  },
+  "Loading sign-in page…": {
+    "en": "Loading sign-in page…",
+    "zh-Hans": "正在加载登录页面…",
+    "zh-Hant": "正在載入登入頁面…",
+    "ja": "サインインページを読み込んでいます…",
+    "de": "Anmeldeseite wird geladen …",
+    "fr": "Chargement de la page de connexion…",
+    "es": "Cargando la página de inicio de sesión…"
+  },
+  "Notify when the connection is established, lost or restored.": {
+    "en": "Notify when the connection is established, lost or restored.",
+    "zh-Hans": "在连接建立、断开或恢复时发送通知。",
+    "zh-Hant": "在連線建立、中斷或恢復時傳送通知。",
+    "ja": "接続の確立、切断、復旧時に通知します。",
+    "de": "Benachrichtigen, wenn die Verbindung hergestellt, getrennt oder wiederhergestellt wird.",
+    "fr": "Avertir lorsque la connexion est établie, perdue ou rétablie.",
+    "es": "Notificar cuando la conexión se establece, se pierde o se restablece."
+  },
+  "NulConnect is still running": {
+    "en": "NulConnect is still running",
+    "zh-Hans": "NulConnect 仍在运行",
+    "zh-Hant": "NulConnect 仍在執行",
+    "ja": "NulConnect は実行中です",
+    "de": "NulConnect wird weiter ausgeführt",
+    "fr": "NulConnect est toujours en cours d’exécution",
+    "es": "NulConnect sigue en ejecución"
+  },
+  "NulConnect keeps running in the notification area. Right-click the icon to quit.": {
+    "en": "NulConnect keeps running in the notification area. Right-click the icon to quit.",
+    "zh-Hans": "NulConnect 会在通知区域中继续运行。右键单击图标可退出。",
+    "zh-Hant": "NulConnect 會在通知區域中持續執行。以滑鼠右鍵按一下圖示即可結束。",
+    "ja": "NulConnect は通知領域で実行を続けます。終了するにはアイコンを右クリックしてください。",
+    "de": "NulConnect läuft im Infobereich weiter. Klicken Sie zum Beenden mit der rechten Maustaste auf das Symbol.",
+    "fr": "NulConnect continue de s’exécuter dans la zone de notification. Cliquez avec le bouton droit sur l’icône pour quitter.",
+    "es": "NulConnect sigue ejecutándose en el área de notificación. Haga clic con el botón derecho en el icono para salir."
+  },
+  "Off": {"en": "Off", "zh-Hans": "关", "zh-Hant": "關", "ja": "オフ", "de": "Aus", "fr": "Désactivé", "es": "Desactivado"},
+  "On": {"en": "On", "zh-Hans": "开", "zh-Hant": "開", "ja": "オン", "de": "Ein", "fr": "Activé", "es": "Activado"},
+  "Open Log Folder": {"en": "Open Log Folder", "zh-Hans": "打开日志文件夹", "zh-Hant": "開啟記錄資料夾", "ja": "ログフォルダーを開く", "de": "Protokollordner öffnen", "fr": "Ouvrir le dossier des journaux", "es": "Abrir la carpeta de registros"},
+  "Open NulConnect": {"en": "Open NulConnect", "zh-Hans": "打开 NulConnect", "zh-Hant": "開啟 NulConnect", "ja": "NulConnect を開く", "de": "NulConnect öffnen", "fr": "Ouvrir NulConnect", "es": "Abrir NulConnect"},
+  "Quit NulConnect": {"en": "Quit NulConnect", "zh-Hans": "退出 NulConnect", "zh-Hant": "結束 NulConnect", "ja": "NulConnect を終了", "de": "NulConnect beenden", "fr": "Quitter NulConnect", "es": "Salir de NulConnect"},
+  "Reconnecting": {"en": "Reconnecting", "zh-Hans": "正在重新连接", "zh-Hant": "正在重新連線", "ja": "再接続しています", "de": "Verbindung wird wiederhergestellt", "fr": "Reconnexion", "es": "Reconectando"},
+  "Remove the NulConnect Helper service and its state files.": {
+    "en": "Remove the NulConnect Helper service and its state files.",
+    "zh-Hans": "移除 NulConnect Helper 服务及其状态文件。",
+    "zh-Hant": "移除 NulConnect Helper 服務及其狀態檔案。",
+    "ja": "NulConnect Helper サービスとその状態ファイルを削除します。",
+    "de": "Den Dienst „NulConnect Helper“ und seine Statusdateien entfernen.",
+    "fr": "Supprimer le service NulConnect Helper et ses fichiers d’état.",
+    "es": "Eliminar el servicio NulConnect Helper y sus archivos de estado."
+  },
+  "Reset": {"en": "Reset", "zh-Hans": "重置", "zh-Hant": "重設", "ja": "リセット", "de": "Zurücksetzen", "fr": "Réinitialiser", "es": "Restablecer"},
+  "Reset Connection Settings": {"en": "Reset Connection Settings", "zh-Hans": "重置连接设置", "zh-Hant": "重設連線設定", "ja": "接続設定をリセット", "de": "Verbindungseinstellungen zurücksetzen", "fr": "Réinitialiser les paramètres de connexion", "es": "Restablecer la configuración de conexión"},
+  "Resources": {"en": "Resources", "zh-Hans": "资源", "zh-Hant": "資源", "ja": "リソース", "de": "Ressourcen", "fr": "Ressources", "es": "Recursos"},
+  "Restore the server address and client parameters to their defaults.": {
+    "en": "Restore the server address and client parameters to their defaults.",
+    "zh-Hans": "将服务器地址和客户端参数恢复为默认值。",
+    "zh-Hant": "將伺服器位址與用戶端參數還原為預設值。",
+    "ja": "サーバーアドレスとクライアントパラメーターを既定値に戻します。",
+    "de": "Serveradresse und Client-Parameter auf die Standardwerte zurücksetzen.",
+    "fr": "Rétablir l’adresse du serveur et les paramètres du client par défaut.",
+    "es": "Restaurar la dirección del servidor y los parámetros del cliente a sus valores predeterminados."
+  },
+  "Running": {"en": "Running", "zh-Hans": "正在运行", "zh-Hant": "執行中", "ja": "実行中", "de": "Wird ausgeführt", "fr": "En cours d’exécution", "es": "En ejecución"},
+  "Stopped": {"en": "Stopped", "zh-Hans": "已停止", "zh-Hant": "已停止", "ja": "停止", "de": "Beendet", "fr": "Arrêté", "es": "Detenido"},
+  "Service Status": {"en": "Service Status", "zh-Hans": "服务状态", "zh-Hant": "服務狀態", "ja": "サービスの状態", "de": "Dienststatus", "fr": "État du service", "es": "Estado del servicio"},
+  "Show notifications": {"en": "Show notifications", "zh-Hans": "显示通知", "zh-Hant": "顯示通知", "ja": "通知を表示", "de": "Benachrichtigungen anzeigen", "fr": "Afficher les notifications", "es": "Mostrar notificaciones"},
+  "Sign in to %1$@": {"en": "Sign in to %1$@", "zh-Hans": "登录到 %1$@", "zh-Hant": "登入 %1$@", "ja": "%1$@ にサインイン", "de": "Bei %1$@ anmelden", "fr": "Se connecter à %1$@", "es": "Iniciar sesión en %1$@"},
+  "Skip certificate validation. Use only for testing.": {
+    "en": "Skip certificate validation. Use only for testing.",
+    "zh-Hans": "跳过证书验证。仅用于测试。",
+    "zh-Hant": "略過憑證驗證。僅供測試使用。",
+    "ja": "証明書の検証を省略します。テスト目的でのみ使用してください。",
+    "de": "Zertifikatsprüfung überspringen. Nur für Tests verwenden.",
+    "fr": "Ignorer la validation des certificats. À utiliser uniquement pour les tests.",
+    "es": "Omitir la validación de certificados. Úselo solo para pruebas."
+  },
+  "Source Code": {"en": "Source Code", "zh-Hans": "源代码", "zh-Hant": "原始碼", "ja": "ソースコード", "de": "Quellcode", "fr": "Code source", "es": "Código fuente"},
+  "Start with Windows": {"en": "Start with Windows", "zh-Hans": "开机自动启动", "zh-Hant": "隨 Windows 啟動", "ja": "Windows の起動時に開始", "de": "Mit Windows starten", "fr": "Démarrer avec Windows", "es": "Iniciar con Windows"},
+  "Startup": {"en": "Startup", "zh-Hans": "启动", "zh-Hant": "啟動", "ja": "スタートアップ", "de": "Autostart", "fr": "Démarrage", "es": "Inicio"},
+  "System proxy enabled": {"en": "System proxy enabled", "zh-Hans": "已启用系统代理", "zh-Hant": "已啟用系統代理", "ja": "システムプロキシを有効にしました", "de": "Systemproxy aktiviert", "fr": "Proxy système activé", "es": "Proxy del sistema activado"},
+  "The Microsoft Edge WebView2 Runtime is required to sign in. Install it and try again.": {
+    "en": "The Microsoft Edge WebView2 Runtime is required to sign in. Install it and try again.",
+    "zh-Hans": "登录需要 Microsoft Edge WebView2 运行时。请安装后重试。",
+    "zh-Hant": "登入需要 Microsoft Edge WebView2 執行階段。請安裝後再試一次。",
+    "ja": "サインインには Microsoft Edge WebView2 ランタイムが必要です。インストールしてから再試行してください。",
+    "de": "Für die Anmeldung wird die Microsoft Edge WebView2-Runtime benötigt. Installieren Sie sie und versuchen Sie es erneut.",
+    "fr": "Le runtime Microsoft Edge WebView2 est requis pour se connecter. Installez-le puis réessayez.",
+    "es": "Se necesita el runtime de Microsoft Edge WebView2 para iniciar sesión. Instálelo e inténtelo de nuevo."
+  },
+  "The NulConnect Helper is a Windows service that creates the virtual network adapter, routes and DNS rules for VPN mode. Proxy mode does not need it.": {
+    "en": "The NulConnect Helper is a Windows service that creates the virtual network adapter, routes and DNS rules for VPN mode. Proxy mode does not need it.",
+    "zh-Hans": "NulConnect Helper 是一个 Windows 服务，负责为 VPN 模式创建虚拟网卡、路由和 DNS 规则。代理模式不需要它。",
+    "zh-Hant": "NulConnect Helper 是一個 Windows 服務，負責為 VPN 模式建立虛擬網路介面卡、路由與 DNS 規則。代理模式不需要它。",
+    "ja": "NulConnect Helper は、VPN モード用の仮想ネットワークアダプター、ルート、DNS ルールを作成する Windows サービスです。プロキシモードでは不要です。",
+    "de": "NulConnect Helper ist ein Windows-Dienst, der für den VPN-Modus den virtuellen Netzwerkadapter, Routen und DNS-Regeln einrichtet. Der Proxymodus benötigt ihn nicht.",
+    "fr": "NulConnect Helper est un service Windows qui crée la carte réseau virtuelle, les routes et les règles DNS du mode VPN. Le mode proxy n’en a pas besoin.",
+    "es": "NulConnect Helper es un servicio de Windows que crea el adaptador de red virtual, las rutas y las reglas DNS del modo VPN. El modo proxy no lo necesita."
+  },
+  "The privileged component is missing from the application folder.": {
+    "en": "The privileged component is missing from the application folder.",
+    "zh-Hans": "应用程序文件夹中缺少特权组件。",
+    "zh-Hant": "應用程式資料夾中缺少特權元件。",
+    "ja": "アプリケーションフォルダーに特権コンポーネントがありません。",
+    "de": "Die privilegierte Komponente fehlt im Anwendungsordner.",
+    "fr": "Le composant privilégié est absent du dossier de l’application.",
+    "es": "Falta el componente privilegiado en la carpeta de la aplicación."
+  },
+  "The sign-in page could not be loaded. Check the network connection and the server address.": {
+    "en": "The sign-in page could not be loaded. Check the network connection and the server address.",
+    "zh-Hans": "无法加载登录页面。请检查网络连接和服务器地址。",
+    "zh-Hant": "無法載入登入頁面。請檢查網路連線與伺服器位址。",
+    "ja": "サインインページを読み込めませんでした。ネットワーク接続とサーバーアドレスを確認してください。",
+    "de": "Die Anmeldeseite konnte nicht geladen werden. Prüfen Sie die Netzwerkverbindung und die Serveradresse.",
+    "fr": "Impossible de charger la page de connexion. Vérifiez la connexion réseau et l’adresse du serveur.",
+    "es": "No se pudo cargar la página de inicio de sesión. Compruebe la conexión de red y la dirección del servidor."
+  },
+  "Third-Party Components": {"en": "Third-Party Components", "zh-Hans": "第三方组件", "zh-Hant": "協力廠商元件", "ja": "サードパーティ コンポーネント", "de": "Komponenten von Drittanbietern", "fr": "Composants tiers", "es": "Componentes de terceros"},
+  "Troubleshooting": {"en": "Troubleshooting", "zh-Hans": "疑难解答", "zh-Hant": "疑難排解", "ja": "トラブルシューティング", "de": "Problembehandlung", "fr": "Dépannage", "es": "Solución de problemas"},
+  "VPN mode requires the NulConnect Helper service. Install it on the Privileged Component page.": {
+    "en": "VPN mode requires the NulConnect Helper service. Install it on the Privileged Component page.",
+    "zh-Hans": "VPN 模式需要 NulConnect Helper 服务。请在“特权组件”页面安装。",
+    "zh-Hant": "VPN 模式需要 NulConnect Helper 服務。請在「特權元件」頁面安裝。",
+    "ja": "VPN モードには NulConnect Helper サービスが必要です。「特権コンポーネント」ページでインストールしてください。",
+    "de": "Der VPN-Modus benötigt den Dienst „NulConnect Helper“. Installieren Sie ihn auf der Seite „Privilegierte Komponente“.",
+    "fr": "Le mode VPN nécessite le service NulConnect Helper. Installez-le depuis la page Composant privilégié.",
+    "es": "El modo VPN requiere el servicio NulConnect Helper. Instálelo en la página Componente privilegiado."
+  },
+  "The WebView2 Runtime is not installed, so the legacy Internet Explorer engine is used. Some sign-in pages may not display correctly.": {
+    "en": "The WebView2 Runtime is not installed, so the legacy Internet Explorer engine is used. Some sign-in pages may not display correctly.",
+    "zh-Hans": "未安装 WebView2 运行时，正在使用旧版 Internet Explorer 内核。部分登录页面可能无法正常显示。",
+    "zh-Hant": "未安裝 WebView2 執行階段，正在使用舊版 Internet Explorer 引擎。部分登入頁面可能無法正常顯示。",
+    "ja": "WebView2 ランタイムがインストールされていないため、従来の Internet Explorer エンジンを使用しています。一部のサインインページは正しく表示されない場合があります。",
+    "de": "Die WebView2-Runtime ist nicht installiert, daher wird die ältere Internet Explorer-Engine verwendet. Manche Anmeldeseiten werden möglicherweise nicht korrekt angezeigt.",
+    "fr": "Le runtime WebView2 n’est pas installé ; l’ancien moteur Internet Explorer est utilisé. Certaines pages de connexion peuvent ne pas s’afficher correctement.",
+    "es": "El runtime de WebView2 no está instalado, por lo que se usa el motor heredado de Internet Explorer. Es posible que algunas páginas de inicio de sesión no se muestren correctamente."
+  },
+  "Version %1$@": {"en": "Version %1$@", "zh-Hans": "版本 %1$@", "zh-Hant": "版本 %1$@", "ja": "バージョン %1$@", "de": "Version %1$@", "fr": "Version %1$@", "es": "Versión %1$@"}
+}
