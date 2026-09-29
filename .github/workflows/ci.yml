@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # The project targets the Visual Studio 2026 toolset (v145); hosted runners
+  # may only have an older one, so the toolset can be overridden here.
+  PLATFORM_TOOLSET: v143
+
+jobs:
+  build:
+    name: Build (Windows x64)
+    runs-on: windows-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v6
+
+      - name: Restore prebuilt dependencies
+        id: deps
+        uses: actions/cache@v4
+        with:
+          path: lib
+          key: deps-${{ hashFiles('tools/update-dependencies.ps1') }}
+
+      - name: Fetch prebuilt dependencies
+        if: steps.deps.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: ./tools/update-dependencies.ps1
+
+      - name: Build
+        shell: pwsh
+        run: msbuild NulConnect.slnx /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=$env:PLATFORM_TOOLSET /v:m /nologo
+
+      - name: Upload build output
+        uses: actions/upload-artifact@v4
+        with:
+          name: NulConnect-build
+          path: |
+            build/x64/Release/NulConnect.exe
+            build/x64/Release/reatrust.dll
+            build/x64/Release/wintun.dll
+            build/x64/Release/nulconnect-helper.exe
