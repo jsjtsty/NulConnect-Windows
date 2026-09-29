@@ -31,6 +31,9 @@ protected:
 
 private:
     class Layout;
+    // How far (in dips) the system caption buttons reach into the client
+    // area; the content pane starts below them.
+    float CaptionOverlap() const;
     void Refresh();
     void UpdateTrafficObservation();
     void SaveWindowPlacement();

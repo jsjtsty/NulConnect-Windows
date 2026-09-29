@@ -63,7 +63,7 @@ public:
         nav_->SetCompact(Width(rect) < kCompactThreshold);
         float pane = nav_->PaneWidth();
         nav_->Arrange(RectF{rect.left, rect.top, rect.left + pane, rect.bottom});
-        content_ = RectF{rect.left + pane, rect.top, rect.right, rect.bottom};
+        content_ = RectF{rect.left + pane, rect.top + window_.CaptionOverlap(), rect.right, rect.bottom};
         float inner = std::min(Width(content_) - 72, 1000.0f);
         float left = content_.left + std::max(36.0f, (Width(content_) - inner) / 2);
         float y = content_.top + 28;
@@ -99,6 +99,22 @@ private:
 };
 
 MainWindow::MainWindow(AppModel& model) : model_(model) {}
+
+// The buttons are drawn by DWM and can be taller than the caption the client
+// area starts below (for example when maximized or at 120% scaling), so they
+// would otherwise cover the top of the content pane.
+float MainWindow::CaptionOverlap() const {
+    constexpr DWORD kCaptionButtonBounds = 5;  // DWMWA_CAPTION_BUTTON_BOUNDS
+    RECT buttons{}, frame{};
+    if (FAILED(DwmGetWindowAttribute(hwnd_, kCaptionButtonBounds, &buttons, sizeof(buttons))) ||
+        FAILED(DwmGetWindowAttribute(hwnd_, DWMWA_EXTENDED_FRAME_BOUNDS, &frame, sizeof(frame)))) {
+        return 0;
+    }
+    POINT origin{0, 0};
+    ClientToScreen(hwnd_, &origin);
+    int overlap = static_cast<int>(frame.top) + buttons.bottom - origin.y;
+    return overlap > 0 ? ToDips(overlap) : 0.0f;
+}
 
 MainWindow::~MainWindow() {
     if (subscription_) model_.Unsubscribe(subscription_);
