@@ -41,6 +41,14 @@ You can also open `NulConnect.slnx` in Visual Studio. The first build downloads 
 
 Both the app and the Rust components link the C runtime statically, so the Visual C++ Redistributable is not required.
 
+## Packaging
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\package.ps1
+```
+
+Builds the Release configuration and writes two files to `dist\`: an [Inno Setup 6](https://jrsoftware.org/isinfo.php) installer (`installer\NulConnect.iss`; installs to `%ProgramFiles%\NulConnect` and registers the helper service) and a portable zip (the app installs the helper on first use). Use `-SkipBuild` to package an existing build.
+
 ## Dependencies
 
 The prebuilt dependencies are stored under `lib\`, which is ignored by Git. `tools\update-dependencies.ps1` downloads them:
@@ -73,8 +81,10 @@ NulConnect/
   src/model/               app state machine, stores, auth, proxy, helper client, tunnel
   src/ui/                  Direct2D rendering, theme, widgets and controls
   src/windows/             main window, pages, flyout, sign-in window
+installer/                 Inno Setup script and Chinese language files
 tools/
   update-dependencies.ps1  downloads lib\
+  package.ps1              builds the installer and the portable zip
   gen-localization.py      regenerates the string table from the macOS app's .strings files
   check-strings.py         lists strings used in code but missing from the table
   make-icon.ps1            builds the .ico from the macOS icon artwork
@@ -88,7 +98,7 @@ tools/
 ## Data locations
 
 - Settings, profile and the DPAPI-protected session: `%APPDATA%\NulConnect`
-- Logs: `%LOCALAPPDATA%\NulConnect\Logs`
+- Logs: `%LOCALAPPDATA%\NulConnect\Logs` (app and library), `%ProgramData%\NulConnect\Logs` (helper)
 - Installed helper: `%ProgramFiles%\NulConnect\Helper`
 
 ## Related projects

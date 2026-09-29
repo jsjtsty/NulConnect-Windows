@@ -11,3 +11,6 @@
 
 # Python
 __pycache__/
+
+# Release packages, produced by tools/package.ps1
+/dist/
