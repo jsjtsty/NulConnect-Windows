@@ -78,6 +78,11 @@ Filename: "{app}\NulConnect.exe"; Description: "{cm:LaunchProgram,NulConnect}"; 
 [UninstallRun]
 Filename: "{app}\nulconnect-helper.exe"; Parameters: "uninstall"; Flags: runhidden waituntilterminated; RunOnceId: "RemoveHelper"
 
+[UninstallDelete]
+; Leftovers the setup did not create: the helper's logs and state.
+Type: filesandordirs; Name: "{app}"
+Type: filesandordirs; Name: "{commonappdata}\NulConnect"
+
 [Code]
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
