@@ -1,5 +1,7 @@
 #include "pch.h"
 #include "model/AppModel.h"
+#include "app/Resource.h"
+#include "core/Diagnostics.h"
 #include "core/Localization.h"
 #include "core/Log.h"
 #include "core/Platform.h"
@@ -352,6 +354,33 @@ void AppModel::SyncHelperLogging() {
             if (HelperClient::IsRunning()) HelperClient::SetLogging(enabled);
         } catch (const std::exception&) {
         }
+    });
+}
+
+void AppModel::ExportDiagnostics() {
+    const OsVersion& os = GetOsVersion();
+    std::string summary = std::string("NulConnect ") + NC_VERSION_STRING + "\r\n";
+    summary += "Windows " + std::to_string(os.major) + "." + std::to_string(os.minor) + "." + std::to_string(os.build) + "\r\n";
+    summary += "Diagnostic logging: " + std::string(settings_.verboseLogging ? "on" : "off") + "\r\n";
+    statusQueue_.Enqueue([this, summary]() mutable {
+        std::wstring path;
+        std::wstring failure;
+        try {
+            auto helper = HelperClient::InstalledVersion();
+            summary += "Helper: " + (helper ? *helper : std::string("not running")) + "\r\n";
+            path = nc::ExportDiagnostics(summary);
+        } catch (...) {
+            failure = CurrentError().message;
+        }
+        Dispatcher::Post([this, path, failure] {
+            if (path.empty()) {
+                SetBanner(BannerSeverity::Error, failure);
+                return;
+            }
+            std::wstring argument = L"/select,\"" + path + L"\"";
+            ShellExecuteW(nullptr, L"open", L"explorer.exe", argument.c_str(), nullptr, SW_SHOWNORMAL);
+            SetBanner(BannerSeverity::Info, TrFormat(L"Diagnostics saved to %1$@", {path}));
+        });
     });
 }
 

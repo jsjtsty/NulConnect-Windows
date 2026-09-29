@@ -106,6 +106,8 @@ public:
     void StartTunnelMode();
     void ApplyDiagnosticLogging();
     void SyncHelperLogging();
+    // Zips the app and helper logs onto the desktop and shows the file.
+    void ExportDiagnostics();
     void StopTunnelMode();
     void SetRouteMode(RouteMode mode);
     void SetSystemProxyEnabled(bool enabled);

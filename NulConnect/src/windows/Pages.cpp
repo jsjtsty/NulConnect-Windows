@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "core/Diagnostics.h"
 #include "windows/Pages.h"
 #include "app/Resource.h"
 #include "core/Localization.h"
@@ -568,19 +569,18 @@ public:
                            Tr(L"Also record detailed protocol and tunnel logs. Turn this on only while investigating a problem."))
                        ->SetTrailing(std::make_unique<ToggleSwitch>());
         logging_->onChange = [this](bool on) { model_.UpdateSettings([on](AppSettings& s) { s.verboseLogging = on; }); };
-        auto* logs = AddCard(Icon::Folder, Tr(L"Open Log Folder"), Tr(L"Diagnostic logs never contain passwords, tickets or session keys."));
+        auto* logs = AddCard(Icon::Folder, Tr(L"Open Log Folders"),
+                             Tr(L"Show the folders of the app and the privileged component. Logs never contain passwords, tickets or session keys."));
         logs->SetClickable(true, Icon::Open);
         logs->onClick = [] {
-            std::wstring folder = JoinPath(LocalDataDirectory(), L"Logs");
-            ShellExecuteW(nullptr, L"open", folder.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+            for (const std::wstring& folder : {AppLogDirectory(), HelperLogDirectory()}) {
+                if (GetFileAttributesW(folder.c_str()) == INVALID_FILE_ATTRIBUTES) continue;  // never created by a user: the helper owns its folder
+                ShellExecuteW(nullptr, L"open", folder.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+            }
         };
-        auto* helperLogs = AddCard(Icon::Folder, Tr(L"Open Helper Log Folder"), Tr(L"Logs written by the privileged component."));
-        helperLogs->SetClickable(true, Icon::Open);
-        helperLogs->onClick = [] {
-            wchar_t base[MAX_PATH] = {};
-            std::wstring folder = GetEnvironmentVariableW(L"ProgramData", base, MAX_PATH) ? JoinPath(JoinPath(base, L"NulConnect"), L"Logs") : L"";
-            if (!folder.empty()) ShellExecuteW(nullptr, L"open", folder.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
-        };
+        auto* exportLogs = AddCard(Icon::Open, Tr(L"Export Diagnostic Logs"), Tr(L"Save the logs as a zip file on the desktop to attach to a bug report."));
+        exportLogs->SetClickable(true);
+        exportLogs->onClick = [this] { model_.ExportDiagnostics(); };
         auto* reset = AddCard(Icon::Refresh, Tr(L"Reset Connection Settings"),
                               Tr(L"Restore the server address and client parameters to their defaults."));
         reset->SetClickable(true);
