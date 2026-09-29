@@ -13,6 +13,7 @@ namespace {
 constexpr const wchar_t* kPipeName = L"\\\\.\\pipe\\NulConnectHelper";
 constexpr const wchar_t* kServiceName = L"NulConnectHelper";
 constexpr const wchar_t* kHelperExe = L"nulconnect-helper.exe";
+std::atomic<bool> g_loggingEnabled{false};
 
 std::optional<DWORD> ServiceState() {
     SC_HANDLE manager = OpenSCManagerW(nullptr, nullptr, SC_MANAGER_CONNECT);
@@ -210,11 +211,21 @@ nlohmann::json HelperClient::Status() {
 }
 
 nlohmann::json HelperClient::StartTun(const nlohmann::json& config) {
+    // The helper may have restarted since the app last told it.
+    try {
+        SetLogging(g_loggingEnabled);
+    } catch (const std::exception&) {
+    }
     return Send("start_tun", {{"config", config}}, 10000);
 }
 
 void HelperClient::StopTun() {
     Send("stop_tun", {}, 30000);
+}
+
+void HelperClient::SetLogging(bool enabled) {
+    g_loggingEnabled = enabled;
+    Send("set_logging", {{"enabled", enabled}}, 3000);
 }
 
 void HelperClient::Cleanup() {

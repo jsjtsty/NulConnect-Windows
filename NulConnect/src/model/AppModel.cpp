@@ -45,6 +45,7 @@ AppModel::~AppModel() {
 void AppModel::Initialize() {
     profile_ = profileStore_.Load();
     settings_ = settingsStore_.Load();
+    SetDiagnosticLogging(settings_.verboseLogging);
     // Persist the PAC token generated for a profile that had none, so the
     // PAC URL of the next run stays the same as long as the profile does.
     try {
@@ -79,6 +80,7 @@ void AppModel::Initialize() {
 // running yet (the application is single-instance), so whatever the helper
 // holds is a leftover: clean it up, then honor "connect on launch".
 void AppModel::PerformLaunchTasks() {
+    SyncHelperLogging();
     statusQueue_.Enqueue([this] {
         bool recovered = false;
         try {
@@ -328,10 +330,29 @@ void AppModel::UpdateSettings(const std::function<void(AppSettings&)>& update) {
     update(copy);
     if (copy == settings_) return;
     bool startupChanged = copy.launchAtStartup != settings_.launchAtStartup;
+    bool loggingChanged = copy.verboseLogging != settings_.verboseLogging;
     settings_ = copy;
     SaveSettings();
     if (startupChanged) ApplyLaunchAtStartup();
+    if (loggingChanged) ApplyDiagnosticLogging();
     Changed();
+}
+
+void AppModel::ApplyDiagnosticLogging() {
+    SetDiagnosticLogging(settings_.verboseLogging);
+    SyncHelperLogging();
+}
+
+// Passes the preference to the privileged helper. Helpers that predate the
+// command, or that are not running, simply keep logging off.
+void AppModel::SyncHelperLogging() {
+    bool enabled = settings_.verboseLogging;
+    statusQueue_.Enqueue([enabled] {
+        try {
+            if (HelperClient::IsRunning()) HelperClient::SetLogging(enabled);
+        } catch (const std::exception&) {
+        }
+    });
 }
 
 void AppModel::SaveSettings() {

@@ -126,7 +126,8 @@ void to_json(nlohmann::json& j, const AppSettings& v) {
          {"showNotifications", v.showNotifications},
          {"trayHintShown", v.trayHintShown},
          {"reconnectOnLaunch", v.reconnectOnLaunch},
-         {"webLoginCompleted", v.webLoginCompleted}};
+         {"webLoginCompleted", v.webLoginCompleted},
+         {"verboseLogging", v.verboseLogging}};
 }
 
 void from_json(const nlohmann::json& j, AppSettings& v) {
@@ -137,6 +138,7 @@ void from_json(const nlohmann::json& j, AppSettings& v) {
     v.trayHintShown = j.value("trayHintShown", d.trayHintShown);
     v.reconnectOnLaunch = j.value("reconnectOnLaunch", d.reconnectOnLaunch);
     v.webLoginCompleted = j.value("webLoginCompleted", d.webLoginCompleted);
+    v.verboseLogging = j.value("verboseLogging", d.verboseLogging);
 }
 
 SessionSummary SessionSummary::From(const atr::SessionMaterial& material) {

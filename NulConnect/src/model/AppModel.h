@@ -104,6 +104,8 @@ public:
     void StartProxyMode();
     void StopProxyMode();
     void StartTunnelMode();
+    void ApplyDiagnosticLogging();
+    void SyncHelperLogging();
     void StopTunnelMode();
     void SetRouteMode(RouteMode mode);
     void SetSystemProxyEnabled(bool enabled);

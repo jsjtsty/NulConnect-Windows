@@ -93,7 +93,7 @@ TunnelManager::LaunchConfiguration TunnelManager::MakeLaunchConfiguration(const 
     configuration.resourceBytes = resource.resourceBytes;
     configuration.serviceHost = serverHost;
     configuration.dnsAddress = PreferredDnsServer(resource);
-    AppendUnique(configuration.managedRouteCidrs, "198.18.0.0/15");
+    // The helper adds its fake-IP range (198.19.0.0/16) itself.
     for (const auto& item : resource.ipResources) {
         for (const auto& cidr : RangeToCidrs(item.ipMin, item.ipMax)) AppendUnique(configuration.managedRouteCidrs, cidr);
     }

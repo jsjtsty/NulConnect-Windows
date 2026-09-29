@@ -2,6 +2,7 @@
 #include "core/Log.h"
 #include "core/Platform.h"
 #include "core/Str.h"
+#include "libreatrust.h"
 
 namespace nc {
 
@@ -10,6 +11,7 @@ namespace {
 std::mutex g_logMutex;
 std::wstring g_logPath;
 constexpr long long kMaxLogBytes = 4LL * 1024 * 1024;
+std::atomic<bool> g_mirrorToLibrary{false};
 
 }  // namespace
 
@@ -32,6 +34,11 @@ std::wstring LogFilePath() {
     return g_logPath;
 }
 
+void SetDiagnosticLogging(bool enabled) {
+    atr_set_verbose_logging(enabled);
+    g_mirrorToLibrary = enabled;
+}
+
 void Log(std::string_view message) {
     SYSTEMTIME now{};
     GetLocalTime(&now);
@@ -42,6 +49,7 @@ void Log(std::string_view message) {
     line.append(message);
     line += "\r\n";
     OutputDebugStringW(Widen(line).c_str());
+    if (g_mirrorToLibrary) atr_log_write(("[NulConnect] " + std::string(message)).c_str());
     std::lock_guard lock(g_logMutex);
     if (g_logPath.empty()) return;
     HANDLE file = CreateFileW(g_logPath.c_str(), FILE_APPEND_DATA, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,

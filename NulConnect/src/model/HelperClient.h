@@ -27,6 +27,8 @@ public:
     static void StopTun();
     // Undoes whatever a previous client left behind (TUN adapter, routes, DNS).
     static void Cleanup();
+    // Older helpers do not know the command; callers ignore the failure.
+    static void SetLogging(bool enabled);
 
     // Compares dotted versions ("0.2.10" > "0.2.9").
     static int CompareVersions(const std::string& left, const std::string& right);

@@ -564,6 +564,10 @@ public:
         autoConnect_->onChange = [this](bool on) { model_.UpdateSettings([on](AppSettings& s) { s.reconnectOnLaunch = on; }); };
 
         AddSection(Tr(L"Troubleshooting"));
+        logging_ = AddCard(Icon::Info, Tr(L"Record Diagnostic Logs"),
+                           Tr(L"Also record detailed protocol and tunnel logs in the shared log folder. Turn this on only while investigating a problem."))
+                       ->SetTrailing(std::make_unique<ToggleSwitch>());
+        logging_->onChange = [this](bool on) { model_.UpdateSettings([on](AppSettings& s) { s.verboseLogging = on; }); };
         auto* logs = AddCard(Icon::Folder, Tr(L"Open Log Folder"), Tr(L"Diagnostic logs never contain passwords, tickets or session keys."));
         logs->SetClickable(true, Icon::Open);
         logs->onClick = [] {
@@ -593,6 +597,7 @@ public:
         tray_->SetOn(settings.closeToTray);
         notify_->SetOn(settings.showNotifications);
         autoConnect_->SetOn(settings.reconnectOnLaunch);
+        logging_->SetOn(settings.verboseLogging);
     }
 
 private:
@@ -600,6 +605,7 @@ private:
     ToggleSwitch* tray_;
     ToggleSwitch* notify_;
     ToggleSwitch* autoConnect_;
+    ToggleSwitch* logging_;
 };
 
 // ---- About -------------------------------------------------------------------------------

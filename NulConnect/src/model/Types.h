@@ -79,6 +79,8 @@ struct AppSettings {
     // A sign-in finished on this machine, so the portal's SSO cookies may let
     // the next one complete without showing a window.
     bool webLoginCompleted = false;
+    // Record verbose diagnostics (this app, libreatrust and the helper).
+    bool verboseLogging = false;
 
     bool operator==(const AppSettings&) const = default;
 };
