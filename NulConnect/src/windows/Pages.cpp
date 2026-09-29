@@ -40,6 +40,33 @@ namespace {
 class HomePage : public Page {
 public:
     HomePage(AppModel& model, Host* host) : Page(model, host) {
+        welcome_ = Emplace<Card>(24.0f);
+        auto* welcomeStack =
+            static_cast<StackPanel*>(welcome_->SetContent(std::make_unique<StackPanel>(Orientation::Vertical, 8.0f)));
+        welcomeStack->Emplace<TextBlock>(Tr(L"Welcome to NulConnect"), TextStyle::Subtitle);
+        welcomeStack->Emplace<TextBlock>(
+            Tr(L"Enter the address of your organization's VPN portal. You can paste the link you open in a browser to sign in."),
+            TextStyle::Body, TextColor::Secondary);
+        auto* portalRow = welcomeStack->Emplace<StackPanel>(Orientation::Horizontal, 8.0f);
+        portal_ = portalRow->Emplace<TextBox>();
+        portal_->SetPlaceholder(Tr(L"VPN Portal Address"));
+        portal_->SetPreferredWidth(320);
+        portal_->onChange = [this](const std::wstring& text) {
+            bool valid = PortalAddress::Parse(Narrow(text)).has_value();
+            portal_->SetError(!Trim(text).empty() && !valid);
+            portalContinue_->SetEnabled(valid);
+        };
+        portal_->onCommit = [this](const std::wstring& text) {
+            if (PortalAddress::Parse(Narrow(text))) model_.ConfigurePortal(text);
+        };
+        portalContinue_ = portalRow->Emplace<Button>(Tr(L"Continue"), ButtonStyle::Accent);
+        portalContinue_->SetEnabled(false);
+        portalContinue_->onClick = [this] { model_.ConfigurePortal(portal_->Text()); };
+        portalHint_ = welcomeStack->Emplace<TextBlock>(
+            Tr(L"Enter a host name such as vpn.example.edu or a portal link starting with https://"), TextStyle::Caption,
+            TextColor::Secondary);
+        Emplace<Spacer>(8.0f);
+
         auto* hero = Emplace<Card>(28.0f);
         auto* stack = static_cast<StackPanel*>(hero->SetContent(std::make_unique<StackPanel>(Orientation::Vertical, 6.0f)));
         stack->SetAlignment(Alignment::Center);
@@ -51,6 +78,11 @@ public:
         message_->SetAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
         message_->SetMaxLines(3);
         stack->Emplace<Spacer>(14.0f);
+        modeSwitch_ = stack->Emplace<Segmented>(
+            std::vector<std::wstring>{RouteModeTitle(RouteMode::Proxy), RouteModeTitle(RouteMode::Tun)});
+        modeSwitch_->SetDangerIndex(1);
+        modeSwitch_->onChange = [this](int index) { model_.SetRouteMode(index == 1 ? RouteMode::Tun : RouteMode::Proxy); };
+        stack->Emplace<Spacer>(6.0f);
         primary_ = stack->Emplace<Button>(L"", ButtonStyle::Accent);
         primary_->SetLarge(true);
         primary_->SetMinWidth(220);
@@ -59,6 +91,8 @@ public:
         Emplace<Spacer>(8.0f);
         mode_ = AddCard(Icon::Swap, Tr(L"Mode"));
         modeValue_ = mode_->SetTrailing(ValueText(L""));
+        account_ = AddCard(Icon::Person, Tr(L"Account"));
+        accountValue_ = account_->SetTrailing(ValueText(L""));
         server_ = AddCard(Icon::Server, Tr(L"Server"));
         serverValue_ = server_->SetTrailing(ValueText(L""));
         proxy_ = AddCard(Icon::Network, Tr(L"Local Proxy"));
@@ -76,6 +110,14 @@ public:
             }
         };
         proxy_->SetTrailing(std::move(row));
+        terminalCommand_ = AddCard(Icon::Document, Tr(L"Copy Terminal Proxy Command"),
+                                   Tr(L"Sets the proxy environment variables in a PowerShell session."));
+        terminalCommand_->SetClickable(true, Icon::Copy);
+        terminalCommand_->onClick = [this] { CopyCommand(terminalCommand_, model_.TerminalProxyCommand()); };
+        sshCommand_ = AddCard(Icon::Document, Tr(L"Copy SSH ProxyCommand Option"),
+                              Tr(L"Uses connect.exe from Git for Windows to tunnel SSH through the SOCKS5 proxy."));
+        sshCommand_->SetClickable(true, Icon::Copy);
+        sshCommand_->onClick = [this] { CopyCommand(sshCommand_, model_.SshProxyCommand()); };
 
         trafficHeader_ = AddSection(Tr(L"Live Traffic"));
         trafficCard_ = Emplace<Card>(16.0f);
@@ -91,6 +133,8 @@ public:
     bool WantsTraffic() const override { return true; }
 
     void Refresh() override {
+        bool configured = model_.IsLoginConfigurationReady();
+        welcome_->SetVisible(!configured);
         const auto& state = model_.connectionState();
         glyph_->SetPhase(state.phase);
         phase_->SetText(PhaseTitle(state.phase));
@@ -98,7 +142,18 @@ public:
         if (message.empty()) {
             message = model_.NeedsLogin() ? Tr(L"Sign in to the server using single sign-on.") : model_.ServerDisplayText();
         }
+        const auto& systemProxy = model_.systemProxyState();
+        if (state.phase != ConnectionPhase::Failed && systemProxy.kind == SystemProxyState::Kind::Failed &&
+            !systemProxy.message.empty()) {
+            message = systemProxy.message;
+        }
         message_->SetText(message);
+        modeSwitch_->SetVisible(model_.IsHelperInstalled());
+        modeSwitch_->SetSelected(model_.EffectiveRouteMode() == RouteMode::Tun ? 1 : 0, false);
+        modeSwitch_->SetEnabled(model_.CanChangeRouteMode());
+        const auto& summary = model_.sessionSummary();
+        account_->SetVisible(summary.has_value() && !model_.NeedsLogin());
+        if (summary) accountValue_->SetText(Widen(summary->username));
         bool running = model_.IsConnectionActive();
         primary_->SetText(model_.PrimaryActionTitle());
         primary_->SetIcon(running ? Icon::Power : (model_.NeedsLogin() ? Icon::SignIn : Icon::Power));
@@ -107,7 +162,10 @@ public:
         modeValue_->SetText(model_.RoutePresentationModeTitle());
         serverValue_->SetText(model_.ServerDisplayText());
         proxyValue_->SetText(model_.ProxyEndpointText());
-        proxy_->SetVisible(model_.EffectiveRouteMode() == RouteMode::Proxy);
+        bool proxyMode = model_.EffectiveRouteMode() == RouteMode::Proxy;
+        proxy_->SetVisible(proxyMode);
+        terminalCommand_->SetVisible(proxyMode);
+        sshCommand_->SetVisible(proxyMode);
         bool live = running && model_.traffic().isLive;
         trafficHeader_->SetVisible(live);
         trafficCard_->SetVisible(live);
@@ -119,6 +177,24 @@ public:
     }
 
 private:
+    void CopyCommand(SettingsCard* card, const std::wstring& text) {
+        if (text.empty() || !CopyTextToClipboard(host_->Hwnd(), text)) return;
+        card->SetClickable(true, Icon::Check);
+        std::weak_ptr<bool> alive = alive_;
+        Dispatcher::SetTimeout(1500, [this, alive, card] {
+            if (alive.lock()) card->SetClickable(true, Icon::Copy);
+        });
+    }
+
+    SettingsCard* terminalCommand_;
+    SettingsCard* sshCommand_;
+    Segmented* modeSwitch_;
+    SettingsCard* account_;
+    TextBlock* accountValue_;
+    Card* welcome_;
+    TextBox* portal_;
+    Button* portalContinue_;
+    TextBlock* portalHint_;
     StatusGlyph* glyph_;
     TextBlock* phase_;
     TextBlock* message_;
@@ -148,8 +224,14 @@ public:
         host_box_->SetPlaceholder(L"vpn.example.com");
         host_box_->SetPreferredWidth(280);
         host_box_->onCommit = [this](const std::wstring& text) {
-            std::string value = Trim(Narrow(text));
-            model_.UpdateProfile([&](Profile& p) { p.serverHost = value; });
+            // An empty box clears the address; anything else must be a valid
+            // host name or a pasted portal link.
+            if (Trim(text).empty()) {
+                model_.UpdateProfile([](Profile& p) { p.serverHost.clear(); });
+            } else if (!model_.ConfigurePortal(text)) {
+                host_box_->SetText(Widen(model_.profile().serverHost));
+            }
+            Refresh();
         };
         auto* portCard = AddCard(Icon::Plug, Tr(L"Port"));
         port_box_ = portCard->SetTrailing(std::make_unique<TextBox>());
@@ -256,6 +338,12 @@ public:
         systemProxyToggle_ = systemProxy_->SetTrailing(std::make_unique<ToggleSwitch>());
         systemProxyToggle_->SetDangerous(true);
         systemProxyToggle_->onChange = [this](bool on) { model_.SetSystemProxyEnabled(on); };
+        scope_ = AddCard(Icon::Network, Tr(L"System Proxy Scope"));
+        scopeControl_ = scope_->SetTrailing(std::make_unique<Segmented>(
+            std::vector<std::wstring>{Tr(L"All Traffic"), Tr(L"Intranet Only (PAC)")}));
+        scopeControl_->onChange = [this](int index) {
+            model_.SetSystemProxyMode(index == 1 ? SystemProxyMode::Pac : SystemProxyMode::All);
+        };
 
         AddSection(Tr(L"Local Proxy"));
         portCard_ = AddCard(Icon::Network, Tr(L"Listening Port"), Tr(L"HTTP and SOCKS5 proxy on 127.0.0.1."));
@@ -290,6 +378,11 @@ public:
         systemProxyToggle_->SetOn(profile.useSystemProxy);
         systemProxyToggle_->SetEnabled(model_.CanChangeSystemProxyPreference());
         systemProxy_->SetTitleColor(profile.useSystemProxy ? TextColor::Critical : TextColor::Primary);
+        scope_->SetVisible(model_.EffectiveRouteMode() == RouteMode::Proxy);
+        scope_->SetDescription(profile.systemProxyMode == SystemProxyMode::Pac
+                                   ? Tr(L"Only intranet resources use the proxy. Other traffic keeps working even if NulConnect quits. Apps that ignore PAC files (many command-line tools) are not proxied.")
+                                   : std::wstring());
+        scopeControl_->SetSelected(profile.systemProxyMode == SystemProxyMode::Pac ? 1 : 0, false);
         bool busy = model_.IsProxyRunning() || model_.IsProxyBusy() || model_.IsTunnelRunning() || model_.IsTunnelBusy();
         port_->SetEnabled(!busy);
         if (!port_->HasFocus()) {
@@ -328,6 +421,8 @@ private:
     InfoBar* helperNotice_;
     SettingsCard* systemProxy_;
     ToggleSwitch* systemProxyToggle_;
+    SettingsCard* scope_;
+    Segmented* scopeControl_;
     SettingsCard* portCard_;
     TextBox* port_;
     TextBox* agent_;
@@ -463,6 +558,10 @@ public:
         notify_ = AddCard(Icon::Info, Tr(L"Show notifications"), Tr(L"Notify when the connection is established, lost or restored."))
                       ->SetTrailing(std::make_unique<ToggleSwitch>());
         notify_->onChange = [this](bool on) { model_.UpdateSettings([on](AppSettings& s) { s.showNotifications = on; }); };
+        autoConnect_ = AddCard(Icon::Plug, Tr(L"Connect Automatically on Launch"),
+                               Tr(L"Connect in the selected mode when NulConnect starts and a saved session exists."))
+                           ->SetTrailing(std::make_unique<ToggleSwitch>());
+        autoConnect_->onChange = [this](bool on) { model_.UpdateSettings([on](AppSettings& s) { s.reconnectOnLaunch = on; }); };
 
         AddSection(Tr(L"Troubleshooting"));
         auto* logs = AddCard(Icon::Folder, Tr(L"Open Log Folder"), Tr(L"Diagnostic logs never contain passwords, tickets or session keys."));
@@ -493,12 +592,14 @@ public:
         startup_->SetOn(settings.launchAtStartup);
         tray_->SetOn(settings.closeToTray);
         notify_->SetOn(settings.showNotifications);
+        autoConnect_->SetOn(settings.reconnectOnLaunch);
     }
 
 private:
     ToggleSwitch* startup_;
     ToggleSwitch* tray_;
     ToggleSwitch* notify_;
+    ToggleSwitch* autoConnect_;
 };
 
 // ---- About -------------------------------------------------------------------------------

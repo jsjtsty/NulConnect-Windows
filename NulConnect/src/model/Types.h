@@ -13,6 +13,10 @@ namespace nc {
 
 enum class RouteMode { Proxy, Tun };
 
+// How the system proxy points at the local proxy: everything goes to it, or a
+// PAC script sends only managed destinations to it.
+enum class SystemProxyMode { All, Pac };
+
 enum class ConnectionPhase { Disconnected, Connecting, Connected, Disconnecting, Failed };
 
 struct ConnectionState {
@@ -22,6 +26,18 @@ struct ConnectionState {
 
 const std::wstring& RouteModeTitle(RouteMode mode);
 const std::wstring& PhaseTitle(ConnectionPhase phase);
+
+std::string MakePacToken();
+
+// The VPN portal address as users typically paste it: a bare host name,
+// `host:port`, or a full portal URL such as `https://vpn.example.edu/portal`.
+struct PortalAddress {
+    std::string host;
+    // Empty when the input did not name a port; keep the current one.
+    std::optional<uint16_t> port;
+
+    static std::optional<PortalAddress> Parse(const std::string& input);
+};
 
 // Connection profile. Field names match the macOS app's profile.json so the
 // file format is shared.
@@ -37,6 +53,10 @@ struct Profile {
     bool allowInsecureTls = false;
     RouteMode routeMode = RouteMode::Proxy;
     bool useSystemProxy = false;
+    SystemProxyMode systemProxyMode = SystemProxyMode::All;
+    // Secret part of the PAC URL; keeps web pages from reading the PAC file
+    // (and with it the list of managed resources) from the loopback proxy.
+    std::string pacToken = MakePacToken();
     uint64_t connectTimeoutMillis = 15000;
     uint64_t ioTimeoutMillis = 10000;
     uint64_t nodeProbeTimeoutMillis = 5000;
@@ -56,6 +76,9 @@ struct AppSettings {
     bool showNotifications = true;
     bool trayHintShown = false;
     bool reconnectOnLaunch = false;
+    // A sign-in finished on this machine, so the portal's SSO cookies may let
+    // the next one complete without showing a window.
+    bool webLoginCompleted = false;
 
     bool operator==(const AppSettings&) const = default;
 };
@@ -78,6 +101,8 @@ void from_json(const nlohmann::json& j, SessionSummary& value);
 struct ProxyEndpoint {
     std::string host;
     uint16_t port = 0;
+    // Where the auto-config (PAC) script is served; empty when there is none.
+    std::string pacUrl;
     std::wstring Display() const;
 };
 

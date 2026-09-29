@@ -87,12 +87,18 @@ public:
     bool NeedsLogin() const { return !storedSession_; }
     std::wstring ProxyEndpointText() const;
     std::wstring ServerDisplayText() const;
+    // Ready-to-paste commands for the local proxy; empty when the port is invalid.
+    std::wstring TerminalProxyCommand() const;
+    std::wstring SshProxyCommand() const;
     std::wstring PrimaryActionTitle() const;
 
     // ---- Actions -----------------------------------------------------------------
     void UpdateProfile(const std::function<void(Profile&)>& update);
     void UpdateSettings(const std::function<void(AppSettings&)>& update);
     void ResetProfileToDefaults();
+    // Accepts a host name, host:port or a pasted portal link. Shows a banner
+    // and returns false when the text is not a valid address.
+    bool ConfigurePortal(const std::wstring& input);
 
     void PerformPrimaryAction();
     void StartProxyMode();
@@ -101,9 +107,19 @@ public:
     void StopTunnelMode();
     void SetRouteMode(RouteMode mode);
     void SetSystemProxyEnabled(bool enabled);
+    void SetSystemProxyMode(SystemProxyMode mode);
 
     void RefreshLoginMethods();
-    void StartWebLogin(std::optional<atr::AuthMethod> method = std::nullopt);
+    // With `allowSilent`, a sign-in that already succeeded once first runs
+    // without a window and is shown only when the page waits for the user.
+    void StartWebLogin(std::optional<atr::AuthMethod> method = std::nullopt, bool allowSilent = false);
+    // True while the sign-in runs without a window (silent, or waiting to be
+    // shown after the user returns).
+    bool IsWebLoginHidden() const { return webLoginHidden_; }
+    // The hidden sign-in page needs the user: show it, or notify when the
+    // user is working elsewhere.
+    void PresentWebLogin();
+    void PresentDeferredWebLogin();
     void CancelWebLogin();
     void CompleteWebLogin(const std::wstring& callbackUrl);
     void Logout();
@@ -138,6 +154,7 @@ private:
     void ScheduleProfilePersistence();
     void SaveSettings();
     void ApplyLaunchAtStartup();
+    void PerformLaunchTasks();
 
     void SaveSessionMaterial(const atr::SessionMaterial& material);
     void SaveResourceSnapshot(const atr::ResourceSnapshot& snapshot);
@@ -146,6 +163,7 @@ private:
     bool HasCapturePolicy(const atr::AuthMethod& method) const;
     void RequestWebLogin(RouteMode mode);
     void AbandonWebLoginSession();
+    void ResetWebLoginPresentation();
     void ContinuePendingConnectionAfterLogin();
 
     // Refreshes the stored session and resource snapshot on the auth queue.
@@ -242,6 +260,9 @@ private:
     int tunnelReconnectAttempt_ = 0;
     bool reconnectPending_ = false;
     std::optional<double> suspendedAt_;
+    bool webLoginHidden_ = false;
+    bool webLoginDeferred_ = false;
+    std::optional<double> lastUserActionAt_;
 
     TrafficCounters trafficOffset_;
     std::optional<std::pair<TrafficCounters, double>> previousTrafficSample_;

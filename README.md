@@ -12,8 +12,9 @@ NulConnect for Windows is a native Windows client for compatible secure access s
 - Mica and acrylic backdrops on Windows 11, light and dark themes, per-monitor DPI awareness
 - Password, SMS, and web-based single sign-on (Microsoft Edge WebView2, with an Internet Explorer engine fallback)
 - Persistent session storage protected with DPAPI, and session resumption
-- Local proxy mode with optional Windows system-proxy integration
+- Local proxy mode with optional Windows system-proxy integration, either for all traffic or through a PAC script that sends only intranet resources to the proxy
 - VPN/TUN mode for system-wide traffic routing, based on Wintun and per-domain DNS through NRPT
+- Silent re-login when the portal's single sign-on can finish without input, connect on launch, and cleanup of VPN state left by a crashed session
 - Notification-area icon with a quick-access flyout
 - English, Simplified Chinese, Traditional Chinese, Japanese, German, French, and Spanish
 
@@ -46,8 +47,8 @@ The prebuilt dependencies are stored under `lib\`, which is ignored by Git. `too
 
 | Dependency | Version | Source |
 |---|---|---|
-| [libreatrust](https://github.com/jsjtsty/libreatrust) | v0.2.7 | GitHub Releases |
-| [nulconnect-helper](https://github.com/jsjtsty/nulconnect-helper) | v0.2.7 | GitHub Releases |
+| [libreatrust](https://github.com/jsjtsty/libreatrust) | v0.3.1 | GitHub Releases |
+| [nulconnect-helper](https://github.com/jsjtsty/nulconnect-helper) | v0.3.0 | GitHub Releases |
 | [Wintun](https://www.wintun.net/) | 0.14.1 | wintun.net (SHA-256 pinned) |
 | [WebView2 SDK](https://www.nuget.org/packages/Microsoft.Web.WebView2) | 1.0.4191.47 | NuGet (SHA-256 pinned) |
 | [nlohmann/json](https://github.com/nlohmann/json) | v3.12.0 | GitHub Releases (SHA-256 pinned) |
@@ -55,7 +56,7 @@ The prebuilt dependencies are stored under `lib\`, which is ignored by Git. `too
 To test another compatible release of the Rust components:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File tools\update-dependencies.ps1 -LibreatrustVersion v0.2.7 -HelperVersion v0.2.7
+powershell -ExecutionPolicy Bypass -File tools\update-dependencies.ps1 -LibreatrustVersion v0.3.1 -HelperVersion v0.3.0
 ```
 
 The `LIBREATRUST_VERSION` and `NULCONNECT_HELPER_VERSION` environment variables work too. Pass `-Force` to download again.

@@ -17,6 +17,16 @@ using namespace ui;
 using Microsoft::WRL::Callback;
 
 namespace {
+// Longest a silent sign-in may run before the page is assumed to need the user.
+constexpr unsigned kSilentTimeoutMs = 20000;
+// A page that stops navigating for this long is checked for input fields.
+constexpr unsigned kSettleDelayMs = 2000;
+constexpr const wchar_t* kInputCheckScript =
+    L"(function(){var i=document.querySelectorAll('input');for(var k=0;k<i.length;k++){var e=i[k];"
+    L"var t=(e.type||'text').toLowerCase();"
+    L"if(['hidden','submit','button','checkbox','radio','image','reset','file'].indexOf(t)>=0)continue;"
+    L"var r=e.getBoundingClientRect();var s=getComputedStyle(e);"
+    L"if(r.width>0&&r.height>0&&s.visibility!=='hidden'&&s.display!=='none')return true;}return false;})()";
 constexpr float kHeaderHeight = 72.0f;
 constexpr float kMargin = 16.0f;
 constexpr const wchar_t* kRuntimeDownload = L"https://go.microsoft.com/fwlink/p/?LinkId=2124703";
@@ -155,6 +165,8 @@ LoginWindow::LoginWindow(WebLoginSession session) : session_(std::move(session))
 
 LoginWindow::~LoginWindow() {
     *alive_ = false;
+    Dispatcher::ClearTimer(silentTimeout_);
+    Dispatcher::ClearTimer(settleTimer_);
     CloseWebView();
 }
 
@@ -168,7 +180,8 @@ bool LoginWindow::ClearBrowsingData() {
     return GetFileAttributesW(folder.c_str()) == INVALID_FILE_ATTRIBUTES;
 }
 
-bool LoginWindow::Create() {
+bool LoginWindow::Create(bool silent) {
+    silent_ = silent;
     std::wstring title = TrFormat(L"Sign in to %1$@", {session_.title});
     if (!CreateHostWindow(L"NulConnect.LoginWindow", title.c_str(), WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, 0, CW_USEDEFAULT,
                           CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, nullptr)) {
@@ -183,16 +196,28 @@ bool LoginWindow::Create() {
     auto chrome = std::make_unique<Chrome>(*this, session_);
     chrome_ = chrome.get();
     SetRoot(std::move(chrome));
+    if (silent_) {
+        std::weak_ptr<bool> alive = alive_;
+        silentTimeout_ = Dispatcher::SetTimeout(kSilentTimeoutMs, [this, alive] {
+            silentTimeout_ = 0;
+            if (alive.lock()) RequestInteraction();
+        });
+    }
     InitializeWebView();
     return true;
 }
 
 void LoginWindow::Show() {
+    // Visible from now on: nothing left to decide silently.
+    silent_ = false;
+    Dispatcher::ClearTimer(silentTimeout_);
+    Dispatcher::ClearTimer(settleTimer_);
     ShowWindow(hwnd_, SW_SHOW);
     SetForegroundWindow(hwnd_);
 }
 
 void LoginWindow::OnWebView2Unavailable() {
+    RequestInteraction();
     if (StartLegacyBrowser()) return;
     ShowError(Tr(L"The Microsoft Edge WebView2 Runtime is required to sign in. Install it and try again."), true);
 }
@@ -327,6 +352,7 @@ void LoginWindow::OnControllerCreated(ICoreWebView2Controller* controller) {
                     return S_OK;
                 }
                 Log("[WebLogin] navigate " + LoggableUrl(Narrow(url)));
+                Dispatcher::ClearTimer(settleTimer_);
                 return S_OK;
             })
             .Get(),
@@ -354,6 +380,7 @@ void LoginWindow::OnControllerCreated(ICoreWebView2Controller* controller) {
                 // Other failures (HTTP 4xx on an intermediate SSO hop, window.stop(),
                 // aborted redirects) still render a usable page and are not errors.
                 if (controller_) controller_->put_IsVisible(TRUE);
+                if (silent_) ScheduleSettleCheck();
                 return S_OK;
             })
             .Get(),
@@ -393,6 +420,42 @@ void LoginWindow::Capture(const std::wstring& url) {
     }
 }
 
+void LoginWindow::RequestInteraction() {
+    if (!silent_ || finished_) return;
+    silent_ = false;
+    Dispatcher::ClearTimer(silentTimeout_);
+    Dispatcher::ClearTimer(settleTimer_);
+    Log("[WebLogin] silent sign-in needs the user");
+    if (onNeedsInteraction) {
+        auto handler = onNeedsInteraction;
+        Dispatcher::Post([handler] { handler(); });
+    }
+}
+
+void LoginWindow::ScheduleSettleCheck() {
+    Dispatcher::ClearTimer(settleTimer_);
+    std::weak_ptr<bool> alive = alive_;
+    settleTimer_ = Dispatcher::SetTimeout(kSettleDelayMs, [this, alive] {
+        settleTimer_ = 0;
+        if (alive.lock()) CheckForInput();
+    });
+}
+
+// Visible text or password fields mean the portal is waiting for input.
+void LoginWindow::CheckForInput() {
+    if (!silent_ || captured_ || !webview_) return;
+    std::weak_ptr<bool> alive = alive_;
+    webview_->ExecuteScript(kInputCheckScript,
+                            Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
+                                [this, alive](HRESULT, LPCWSTR result) -> HRESULT {
+                                    if (!alive.lock() || !silent_ || captured_) return S_OK;
+                                    if (result && wcscmp(result, L"true") == 0) RequestInteraction();
+                                    else ScheduleSettleCheck();
+                                    return S_OK;
+                                })
+                                .Get());
+}
+
 void LoginWindow::Cancel() {
     if (finished_) return;
     finished_ = true;
@@ -403,6 +466,7 @@ void LoginWindow::Cancel() {
 }
 
 void LoginWindow::ShowError(const std::wstring& message, bool runtimeMissing) {
+    RequestInteraction();
     if (chrome_) chrome_->SetError(message, runtimeMissing);
     if (runtimeMissing && controller_) controller_->put_IsVisible(FALSE);
     InvalidateLayout();

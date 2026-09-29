@@ -217,4 +217,8 @@ void HelperClient::StopTun() {
     Send("stop_tun", {}, 30000);
 }
 
+void HelperClient::Cleanup() {
+    Send("cleanup", {}, 30000);
+}
+
 }  // namespace nc

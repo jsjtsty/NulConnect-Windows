@@ -226,8 +226,13 @@ LRESULT App::HandleMessage(UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
     case TrayIcon::kCallbackMessage:
         switch (LOWORD(lParam)) {
+        case NIN_BALLOONUSERCLICK:
+            // A notification about a sign-in that is waiting in the background.
+            model_.PresentDeferredWebLogin();
+            break;
         case NIN_SELECT:
         case NIN_KEYSELECT:
+            model_.PresentDeferredWebLogin();
             ToggleFlyout();
             break;
         case WM_CONTEXTMENU:
@@ -271,6 +276,7 @@ LRESULT App::HandleMessage(UINT message, WPARAM wParam, LPARAM lParam) {
 }
 
 void App::ShowMainWindow(PageId page) {
+    model_.PresentDeferredWebLogin();
     if (flyout_) flyout_->Hide();
     main_->Show(page);
 }
@@ -345,8 +351,9 @@ void App::SyncLoginWindow() {
         login_.reset();
         return;
     }
+    bool hidden = model_.IsWebLoginHidden();
     if (login_ && login_->SessionId() == session->id) {
-        login_->Show();
+        if (!hidden) login_->Show();
         return;
     }
     login_ = std::make_unique<LoginWindow>(*session);
@@ -355,8 +362,9 @@ void App::SyncLoginWindow() {
         model_.CompleteWebLogin(url);
     };
     login_->onCancel = [this] { model_.CancelWebLogin(); };
-    if (login_->Create()) {
-        login_->Show();
+    login_->onNeedsInteraction = [this] { model_.PresentWebLogin(); };
+    if (login_->Create(hidden)) {
+        if (!hidden) login_->Show();
     } else {
         login_.reset();
         model_.CancelWebLogin();

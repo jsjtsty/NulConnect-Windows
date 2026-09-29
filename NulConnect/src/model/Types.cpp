@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "model/Types.h"
 #include "core/Localization.h"
+#include "core/Platform.h"
 #include "core/Str.h"
 
 #include <winhttp.h>
@@ -21,6 +22,58 @@ const std::wstring& PhaseTitle(ConnectionPhase phase) {
     }
 }
 
+std::optional<PortalAddress> PortalAddress::Parse(const std::string& input) {
+    std::string text = Trim(input);
+    if (text.empty() || text.find_first_of(" \t\r\n") != std::string::npos) return std::nullopt;
+    bool hasScheme = false;
+    std::string scheme = "https";
+    if (size_t at = text.find("://"); at != std::string::npos) {
+        hasScheme = true;
+        scheme = ToLower(text.substr(0, at));
+        if (scheme != "http" && scheme != "https") return std::nullopt;
+        text = text.substr(at + 3);
+    }
+    std::string authority = text.substr(0, text.find_first_of("/?#"));
+    if (authority.empty() || authority.find('@') != std::string::npos) return std::nullopt;
+
+    std::string host = authority;
+    std::string portText;
+    if (authority.front() == '[') {
+        size_t close = authority.find(']');
+        if (close == std::string::npos) return std::nullopt;
+        host = authority.substr(0, close + 1);
+        std::string rest = authority.substr(close + 1);
+        if (!rest.empty()) {
+            if (rest.front() != ':') return std::nullopt;
+            portText = rest.substr(1);
+        }
+    } else if (size_t colon = authority.find(':'); colon != std::string::npos) {
+        host = authority.substr(0, colon);
+        portText = authority.substr(colon + 1);
+    }
+    if (host.empty()) return std::nullopt;
+
+    PortalAddress address;
+    address.host = ToLower(host);
+    if (!portText.empty()) {
+        if (portText.size() > 5 || portText.find_first_not_of("0123456789") != std::string::npos) return std::nullopt;
+        unsigned long port = std::stoul(portText);
+        if (port < 1 || port > 65535) return std::nullopt;
+        address.port = static_cast<uint16_t>(port);
+    } else if (authority.back() == ':') {
+        return std::nullopt;
+    } else if (hasScheme) {
+        // A pasted link means the scheme's default port; a bare host keeps
+        // the configured one.
+        address.port = static_cast<uint16_t>(scheme == "http" ? 80 : 443);
+    }
+    return address;
+}
+
+std::string MakePacToken() {
+    return RandomHex(16);
+}
+
 void to_json(nlohmann::json& j, const Profile& v) {
     j = {{"serverHost", v.serverHost},
          {"serverPort", v.serverPort},
@@ -30,6 +83,8 @@ void to_json(nlohmann::json& j, const Profile& v) {
          {"allowInsecureTLS", v.allowInsecureTls},
          {"routeMode", v.routeMode == RouteMode::Tun ? "tun" : "proxy"},
          {"useSystemProxy", v.useSystemProxy},
+         {"systemProxyMode", v.systemProxyMode == SystemProxyMode::Pac ? "pac" : "all"},
+         {"pacToken", v.pacToken},
          {"connectTimeoutMillis", v.connectTimeoutMillis},
          {"ioTimeoutMillis", v.ioTimeoutMillis},
          {"nodeProbeTimeoutMillis", v.nodeProbeTimeoutMillis},
@@ -53,6 +108,11 @@ void from_json(const nlohmann::json& j, Profile& v) {
     v.allowInsecureTls = j.value("allowInsecureTLS", defaults.allowInsecureTls);
     v.routeMode = j.value("routeMode", std::string("proxy")) == "tun" ? RouteMode::Tun : RouteMode::Proxy;
     v.useSystemProxy = j.value("useSystemProxy", defaults.useSystemProxy);
+    v.systemProxyMode = j.value("systemProxyMode", std::string("all")) == "pac" ? SystemProxyMode::Pac : SystemProxyMode::All;
+    v.pacToken = j.value("pacToken", std::string());
+    bool tokenValid = !v.pacToken.empty() && std::all_of(v.pacToken.begin(), v.pacToken.end(),
+                                                         [](unsigned char c) { return std::isalnum(c) != 0; });
+    if (!tokenValid) v.pacToken = MakePacToken();
     v.connectTimeoutMillis = j.value("connectTimeoutMillis", defaults.connectTimeoutMillis);
     v.ioTimeoutMillis = j.value("ioTimeoutMillis", defaults.ioTimeoutMillis);
     v.nodeProbeTimeoutMillis = j.value("nodeProbeTimeoutMillis", defaults.nodeProbeTimeoutMillis);
@@ -65,7 +125,8 @@ void to_json(nlohmann::json& j, const AppSettings& v) {
          {"closeToTray", v.closeToTray},
          {"showNotifications", v.showNotifications},
          {"trayHintShown", v.trayHintShown},
-         {"reconnectOnLaunch", v.reconnectOnLaunch}};
+         {"reconnectOnLaunch", v.reconnectOnLaunch},
+         {"webLoginCompleted", v.webLoginCompleted}};
 }
 
 void from_json(const nlohmann::json& j, AppSettings& v) {
@@ -75,6 +136,7 @@ void from_json(const nlohmann::json& j, AppSettings& v) {
     v.showNotifications = j.value("showNotifications", d.showNotifications);
     v.trayHintShown = j.value("trayHintShown", d.trayHintShown);
     v.reconnectOnLaunch = j.value("reconnectOnLaunch", d.reconnectOnLaunch);
+    v.webLoginCompleted = j.value("webLoginCompleted", d.webLoginCompleted);
 }
 
 SessionSummary SessionSummary::From(const atr::SessionMaterial& material) {

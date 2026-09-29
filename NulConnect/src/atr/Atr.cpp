@@ -243,6 +243,7 @@ std::unique_ptr<ProxyService> Client::StartProxy(const ProxyConfig& config) cons
     raw.idle_timeout_ms = config.idleTimeoutMs;
     raw.enable_http = config.enableHttp;
     raw.enable_socks5 = config.enableSocks5;
+    raw.pac_token = config.pacToken.empty() ? nullptr : config.pacToken.c_str();
     atr_proxy_service_t* service = nullptr;
     Check(atr_client_start_proxy_service(handle_, &raw, &service), "start_proxy_service");
     return std::make_unique<ProxyService>(service);
@@ -250,6 +251,7 @@ std::unique_ptr<ProxyService> Client::StartProxy(const ProxyConfig& config) cons
 
 ProxyService::~ProxyService() {
     if (handle_) {
+        atr_proxy_service_set_event_callback(handle_, nullptr, nullptr);
         atr_proxy_service_stop(handle_);
         atr_proxy_service_free(handle_);
     }
@@ -287,18 +289,45 @@ ProxyTraffic ProxyService::Traffic() const {
     return {raw.managed_upload_bytes, raw.managed_download_bytes};
 }
 
-ProxyEvent ProxyService::TakeEvent() const {
-    atr_proxy_service_event_kind_t kind = ATR_PROXY_SERVICE_EVENT_NONE;
-    char* message = nullptr;
-    Check(atr_proxy_service_take_event(handle_, &kind, &message), "proxy_service_take_event");
+namespace {
+
+ProxyEvent MakeEvent(atr_proxy_service_event_kind_t kind, std::string message) {
     ProxyEvent event;
-    event.message = Take(message);
+    event.message = std::move(message);
     switch (kind) {
     case ATR_PROXY_SERVICE_EVENT_ERROR: event.kind = ProxyEventKind::Error; break;
     case ATR_PROXY_SERVICE_EVENT_SESSION_INVALIDATED: event.kind = ProxyEventKind::SessionInvalidated; break;
     default: event.kind = ProxyEventKind::None; break;
     }
     return event;
+}
+
+void EventTrampoline(atr_proxy_service_event_kind_t kind, const char* message, void* userData) {
+    auto* callback = static_cast<std::function<void(ProxyEvent)>*>(userData);
+    try {
+        (*callback)(MakeEvent(kind, message ? message : ""));
+    } catch (...) {
+    }
+}
+
+}  // namespace
+
+ProxyEvent ProxyService::TakeEvent() const {
+    atr_proxy_service_event_kind_t kind = ATR_PROXY_SERVICE_EVENT_NONE;
+    char* message = nullptr;
+    Check(atr_proxy_service_take_event(handle_, &kind, &message), "proxy_service_take_event");
+    return MakeEvent(kind, Take(message));
+}
+
+void ProxyService::SetEventCallback(std::function<void(ProxyEvent)> callback) {
+    if (!callback) {
+        Check(atr_proxy_service_set_event_callback(handle_, nullptr, nullptr), "proxy_service_set_event_callback");
+        eventCallback_.reset();
+        return;
+    }
+    auto next = std::make_unique<std::function<void(ProxyEvent)>>(std::move(callback));
+    Check(atr_proxy_service_set_event_callback(handle_, &EventTrampoline, next.get()), "proxy_service_set_event_callback");
+    eventCallback_ = std::move(next);
 }
 
 // ---- JSON --------------------------------------------------------------------

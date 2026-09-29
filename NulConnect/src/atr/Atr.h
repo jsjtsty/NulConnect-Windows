@@ -9,6 +9,8 @@
 #include <nlohmann/json.hpp>
 
 #include <cstdint>
+#include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
@@ -176,6 +178,8 @@ public:
         uint64_t idleTimeoutMs = 0;
         bool enableHttp = true;
         bool enableSocks5 = true;
+        // Serves /proxy.pac?token=<pacToken> when not empty.
+        std::string pacToken;
     };
     std::unique_ptr<ProxyService> StartProxy(const ProxyConfig& config) const;
 
@@ -196,9 +200,14 @@ public:
     ProxyStats Stats() const;
     ProxyTraffic Traffic() const;
     ProxyEvent TakeEvent() const;
+    // The callback runs on a library thread; it must not stop or free the
+    // service. Pass an empty function to clear it; that call returns once a
+    // running callback has finished.
+    void SetEventCallback(std::function<void(ProxyEvent)> callback);
 
 private:
     atr_proxy_service_t* handle_ = nullptr;
+    std::unique_ptr<std::function<void(ProxyEvent)>> eventCallback_;
 };
 
 // Session material and resource snapshots are persisted as JSON.

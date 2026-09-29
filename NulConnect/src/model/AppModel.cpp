@@ -45,6 +45,12 @@ AppModel::~AppModel() {
 void AppModel::Initialize() {
     profile_ = profileStore_.Load();
     settings_ = settingsStore_.Load();
+    // Persist the PAC token generated for a profile that had none, so the
+    // PAC URL of the next run stays the same as long as the profile does.
+    try {
+        profileStore_.Save(profile_);
+    } catch (...) {
+    }
     storedSession_ = sessionVault_.Load();
     sessionSummary_ = sessionVault_.LoadSummary();
     if (!sessionSummary_ && storedSession_) sessionSummary_ = SessionSummary::From(*storedSession_);
@@ -65,6 +71,40 @@ void AppModel::Initialize() {
     // The helper service can be removed or stopped behind our back.
     helperPollTimer_ = Dispatcher::SetInterval(10000, [this] { RefreshHelperState(false); });
     ApplyLaunchAtStartup();
+    PerformLaunchTasks();
+}
+
+// A previous run of this app may have crashed while the helper service still
+// held the TUN adapter, routes and DNS rules. Nothing of this instance is
+// running yet (the application is single-instance), so whatever the helper
+// holds is a leftover: clean it up, then honor "connect on launch".
+void AppModel::PerformLaunchTasks() {
+    statusQueue_.Enqueue([this] {
+        bool recovered = false;
+        try {
+            if (HelperClient::IsRunning()) {
+                nlohmann::json status = HelperClient::Status();
+                std::string tun = status.contains("tun") && status["tun"].is_object() ? status["tun"].value("status", "") : "";
+                if (tun == "starting" || tun == "running" || tun == "stopping") {
+                    Log("[Launch] recovering stale VPN state: " + tun);
+                    HelperClient::Cleanup();
+                    recovered = true;
+                }
+            }
+        } catch (const std::exception& error) {
+            Log(std::string("[Launch] recovery failed: ") + error.what());
+        }
+        Dispatcher::Post([this, recovered] {
+            if (recovered) SetBanner(BannerSeverity::Info, Tr(L"Restored network settings left by the previous session"));
+            if (!settings_.reconnectOnLaunch || !storedSession_) return;
+            bool idle = connectionState_.phase == ConnectionPhase::Disconnected || connectionState_.phase == ConnectionPhase::Failed;
+            if (!idle || IsProxyRunning() || IsProxyBusy() || IsTunnelRunning() || IsTunnelBusy()) return;
+            Log("[Launch] connect on launch");
+            PerformPrimaryAction();
+            // Not a user action: a sign-in that follows may stay in the background.
+            lastUserActionAt_.reset();
+        });
+    });
 }
 
 // ---- Observation ---------------------------------------------------------------
@@ -179,6 +219,22 @@ std::wstring AppModel::ProxyEndpointText() const {
     return L"127.0.0.1:" + std::to_wstring(profile_.localProxyPort);
 }
 
+std::wstring AppModel::TerminalProxyCommand() const {
+    if (!IsProxyRunning() && !IsLocalProxyPortValid()) return {};
+    std::wstring endpoint = IsProxyRunning() ? proxyState_.endpoint.Display() : ProxyEndpointText();
+    // PowerShell syntax; socks5h makes curl & co. resolve names through the
+    // proxy, which intranet names need.
+    return L"$env:http_proxy='http://" + endpoint + L"'; $env:https_proxy='http://" + endpoint +
+           L"'; $env:all_proxy='socks5h://" + endpoint + L"'";
+}
+
+std::wstring AppModel::SshProxyCommand() const {
+    if (!IsProxyRunning() && !IsLocalProxyPortValid()) return {};
+    std::wstring endpoint = IsProxyRunning() ? proxyState_.endpoint.Display() : ProxyEndpointText();
+    // connect.exe ships with Git for Windows; the SOCKS5 proxy resolves the host name.
+    return L"-o \"ProxyCommand=connect -S " + endpoint + L" %h %p\"";
+}
+
 std::wstring AppModel::ServerDisplayText() const {
     std::string host = Trim(profile_.serverHost);
     if (host.empty()) return Tr(L"Server not configured");
@@ -240,6 +296,20 @@ void AppModel::ScheduleProfilePersistence() {
             SetBanner(BannerSeverity::Error, CurrentError().message);
         }
     });
+}
+
+bool AppModel::ConfigurePortal(const std::wstring& input) {
+    auto address = PortalAddress::Parse(Narrow(input));
+    if (!address) {
+        SetBanner(BannerSeverity::Warning,
+                  Tr(L"Enter a host name such as vpn.example.edu or a portal link starting with https://"));
+        return false;
+    }
+    UpdateProfile([&](Profile& p) {
+        p.serverHost = address->host;
+        if (address->port) p.serverPort = *address->port;
+    });
+    return true;
 }
 
 void AppModel::ResetProfileToDefaults() {
@@ -382,6 +452,7 @@ void AppModel::RefreshSessionAndResource(CancelToken token, std::function<void(R
 
 void AppModel::PerformPrimaryAction() {
     if (IsPrimaryActionBusy()) return;
+    lastUserActionAt_ = MonotonicSeconds();
     if (EffectiveRouteMode() == RouteMode::Tun) {
         if (IsTunnelRunning()) StopTunnelMode();
         else StartTunnelMode();
@@ -562,12 +633,20 @@ void AppModel::SetSystemProxyEnabled(bool enabled) {
     else DisableSystemProxy();
 }
 
+void AppModel::SetSystemProxyMode(SystemProxyMode mode) {
+    if (mode == profile_.systemProxyMode) return;
+    UpdateProfile([mode](Profile& p) { p.systemProxyMode = mode; });
+    // Re-apply right away when the system proxy is active.
+    if (IsSystemProxyEnabled() && IsProxyRunning()) EnableSystemProxy(proxyState_.endpoint);
+}
+
 void AppModel::EnableSystemProxy(const ProxyEndpoint& endpoint) {
     systemProxyState_ = SystemProxyState{SystemProxyState::Kind::Enabling, {}};
     Changed();
     std::string serverHost = profile_.serverHost;
+    SystemProxyMode mode = profile_.systemProxyMode;
     RunAsyncVoid(
-        networkQueue_, nullptr, [endpoint, serverHost] { SystemProxy::Enable(endpoint, serverHost); },
+        networkQueue_, nullptr, [endpoint, serverHost, mode] { SystemProxy::Enable(endpoint, serverHost, mode); },
         [this] {
             systemProxyState_ = SystemProxyState{SystemProxyState::Kind::Enabled, {}};
             SetBanner(BannerSeverity::Success, Tr(L"System proxy enabled"));
@@ -1084,7 +1163,7 @@ void AppModel::RefreshLoginMethods() {
         });
 }
 
-void AppModel::StartWebLogin(std::optional<atr::AuthMethod> method) {
+void AppModel::StartWebLogin(std::optional<atr::AuthMethod> method, bool allowSilent) {
     if (!IsLoginConfigurationReady()) {
         loginState_ = LoginState{LoginState::Kind::Failed, 0, Tr(L"Enter the server address in Settings first")};
         SetBanner(BannerSeverity::Warning, Tr(L"Enter and save the server address first"));
@@ -1102,6 +1181,7 @@ void AppModel::StartWebLogin(std::optional<atr::AuthMethod> method) {
         std::optional<WebLoginSession> session;
     };
     SessionVault vault;
+    bool silent = allowSilent && settings_.webLoginCompleted;
     RunAsync<Result>(
         authQueue_, loginTask_,
         [engine = authEngine_, config, method, serverHost, profile, vault] {
@@ -1136,7 +1216,7 @@ void AppModel::StartWebLogin(std::optional<atr::AuthMethod> method) {
             result.session = engine->ResolveWebLoginSession(*target, deviceId);
             return result;
         },
-        [this](Result result) {
+        [this, silent](Result result) {
             availableLoginMethods_ = result.methods;
             if (!result.session) {
                 std::wstring message = Tr(L"No supported WebView sign-in method found");
@@ -1146,9 +1226,12 @@ void AppModel::StartWebLogin(std::optional<atr::AuthMethod> method) {
                 return;
             }
             webLoginSession_ = result.session;
+            webLoginHidden_ = silent;
+            webLoginDeferred_ = false;
             loginState_ = LoginState{LoginState::Kind::Presenting, 0, result.session->title};
-            SetBanner(BannerSeverity::Info, TrFormat(L"Opened %1$@", {result.session->title}));
-            Log("[Login] open web session start=" + LoggableUrl(Narrow(result.session->startUrl)));
+            if (silent) SetBanner(BannerSeverity::Info, Tr(L"Restoring sign-in session"));
+            else SetBanner(BannerSeverity::Info, TrFormat(L"Opened %1$@", {result.session->title}));
+            Log("[Login] open web session silent=" + std::to_string(silent) + " start=" + LoggableUrl(Narrow(result.session->startUrl)));
             if (onWebLoginSessionChanged) onWebLoginSessionChanged();
         },
         [this](const ErrorInfo& error) {
@@ -1158,8 +1241,44 @@ void AppModel::StartWebLogin(std::optional<atr::AuthMethod> method) {
         });
 }
 
+void AppModel::ResetWebLoginPresentation() {
+    webLoginHidden_ = false;
+    webLoginDeferred_ = false;
+}
+
+void AppModel::PresentWebLogin() {
+    if (!webLoginSession_ || !webLoginHidden_ || webLoginDeferred_) return;
+    bool foreground = false;
+    if (HWND window = GetForegroundWindow()) {
+        DWORD processId = 0;
+        GetWindowThreadProcessId(window, &processId);
+        foreground = processId == GetCurrentProcessId();
+    }
+    bool userWaiting = foreground || (lastUserActionAt_ && MonotonicSeconds() - *lastUserActionAt_ < 60) ||
+                       !settings_.showNotifications;
+    if (userWaiting) {
+        webLoginHidden_ = false;
+        SetBanner(BannerSeverity::Info, TrFormat(L"Opened %1$@", {webLoginSession_->title}));
+        if (onWebLoginSessionChanged) onWebLoginSessionChanged();
+    } else {
+        // A background sign-in (for example an automatic reconnect) must not
+        // steal focus: notify and show the window when the user returns.
+        webLoginDeferred_ = true;
+        SetBanner(BannerSeverity::Info, Tr(L"Sign in again to reconnect"));
+        Notify(L"NulConnect", Tr(L"Sign in again to reconnect"));
+    }
+}
+
+void AppModel::PresentDeferredWebLogin() {
+    if (!webLoginDeferred_ || !webLoginSession_) return;
+    ResetWebLoginPresentation();
+    SetBanner(BannerSeverity::Info, TrFormat(L"Opened %1$@", {webLoginSession_->title}));
+    if (onWebLoginSessionChanged) onWebLoginSessionChanged();
+}
+
 void AppModel::CancelWebLogin() {
     CancelAndReset(loginTask_);
+    ResetWebLoginPresentation();
     bool hadSession = webLoginSession_.has_value();
     webLoginSession_.reset();
     pendingConnectionMode_.reset();
@@ -1171,7 +1290,7 @@ void AppModel::CancelWebLogin() {
 
 void AppModel::RequestWebLogin(RouteMode mode) {
     pendingConnectionMode_ = mode;
-    StartWebLogin();
+    StartWebLogin(std::nullopt, true);
 }
 
 void AppModel::ContinuePendingConnectionAfterLogin() {
@@ -1220,7 +1339,12 @@ void AppModel::CompleteWebLogin(const std::wstring& callbackUrl) {
             switch (result.challenge.kind) {
             case atr::ChallengeKind::Done: {
                 SaveSessionMaterial(result.challenge.session);
+                if (!settings_.webLoginCompleted) {
+                    settings_.webLoginCompleted = true;
+                    SaveSettings();
+                }
                 loginState_ = LoginState{LoginState::Kind::Succeeded, 0, Tr(L"Session saved")};
+                ResetWebLoginPresentation();
                 webLoginSession_.reset();
                 if (onWebLoginSessionChanged) onWebLoginSessionChanged();
                 if (!IsProxyRunning()) SetConnection(ConnectionPhase::Disconnected, Tr(L"Signed in. You can start the proxy."));
@@ -1257,6 +1381,7 @@ void AppModel::CompleteWebLogin(const std::wstring& callbackUrl) {
 }
 
 void AppModel::AbandonWebLoginSession() {
+    ResetWebLoginPresentation();
     if (!webLoginSession_) return;
     webLoginSession_.reset();
     if (onWebLoginSessionChanged) onWebLoginSessionChanged();
@@ -1270,6 +1395,12 @@ void AppModel::Logout() {
     PrepareForExit([this] {
         authQueue_.Enqueue([engine = authEngine_] { engine->Reset(); });
         if (clearWebLoginData) clearWebLoginData();
+        // The SSO cookies are gone; a silent attempt could only time out.
+        if (settings_.webLoginCompleted) {
+            settings_.webLoginCompleted = false;
+            SaveSettings();
+        }
+        ResetWebLoginPresentation();
         try {
             sessionVault_.Clear();
             resourceStore_.Delete();

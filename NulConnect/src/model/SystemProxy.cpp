@@ -86,7 +86,7 @@ ProxySettings FromJson(const nlohmann::json& json) {
 
 }  // namespace
 
-void SystemProxy::Enable(const ProxyEndpoint& endpoint, const std::string& serverHost) {
+void SystemProxy::Enable(const ProxyEndpoint& endpoint, const std::string& serverHost, SystemProxyMode mode) {
     // Keep the first backup: when re-enabling, the current settings are ours.
     ProxySettings previous;
     std::string data;
@@ -100,6 +100,16 @@ void SystemProxy::Enable(const ProxyEndpoint& endpoint, const std::string& serve
         }
     }
     ProxySettings settings;
+    if (mode == SystemProxyMode::Pac && !endpoint.pacUrl.empty()) {
+        // With a PAC script only managed resources reach the local proxy;
+        // everything else stays direct, and the script's DIRECT fallback keeps
+        // the machine online if the proxy goes away.
+        settings.flags = PROXY_TYPE_DIRECT | PROXY_TYPE_AUTO_PROXY_URL;
+        settings.autoConfigUrl = Widen(endpoint.pacUrl);
+        Apply(settings);
+        Log("[SystemProxy] enabled PAC " + endpoint.host + ":" + std::to_string(endpoint.port));
+        return;
+    }
     settings.flags = PROXY_TYPE_DIRECT | PROXY_TYPE_PROXY;
     settings.server = Widen(endpoint.host) + L":" + std::to_wstring(endpoint.port);
     // As on macOS: the portal host plus the user's existing exceptions stay
@@ -120,7 +130,10 @@ void SystemProxy::Restore() {
         // No backup: fall back to a direct connection only if the current
         // setting still points at us.
         ProxySettings current = Query();
-        if ((current.flags & PROXY_TYPE_PROXY) && current.server.rfind(L"127.0.0.1:", 0) == 0) {
+        bool ours = ((current.flags & PROXY_TYPE_PROXY) && current.server.rfind(L"127.0.0.1:", 0) == 0) ||
+                    ((current.flags & PROXY_TYPE_AUTO_PROXY_URL) && current.autoConfigUrl.rfind(L"http://127.0.0.1:", 0) == 0 &&
+                     current.autoConfigUrl.find(L"/proxy.pac?token=") != std::wstring::npos);
+        if (ours) {
             ProxySettings direct;
             direct.flags = PROXY_TYPE_DIRECT | (current.flags & PROXY_TYPE_AUTO_DETECT);
             Apply(direct);

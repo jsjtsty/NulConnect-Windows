@@ -25,6 +25,8 @@ public:
     static nlohmann::json Status();
     static nlohmann::json StartTun(const nlohmann::json& config);
     static void StopTun();
+    // Undoes whatever a previous client left behind (TUN adapter, routes, DNS).
+    static void Cleanup();
 
     // Compares dotted versions ("0.2.10" > "0.2.9").
     static int CompareVersions(const std::string& left, const std::string& right);

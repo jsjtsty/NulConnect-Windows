@@ -2,11 +2,9 @@
 
 #include "model/Types.h"
 
-#include <atomic>
 #include <functional>
 #include <memory>
 #include <mutex>
-#include <thread>
 
 namespace nc {
 
@@ -27,13 +25,13 @@ public:
     std::function<void(std::wstring)> onSessionInvalidated;
 
 private:
-    void MonitorEvents();
+    ProxyEndpoint MakeEndpoint(const atr::ProxyEndpoint& endpoint) const;
+    void HandleEvent(atr::ProxyEvent event);
 
     std::unique_ptr<atr::Client> client_;
     std::unique_ptr<atr::ProxyService> service_;
+    std::string pacToken_;
     mutable std::mutex mutex_;
-    std::thread monitor_;
-    std::atomic<bool> stopping_{false};
     uint16_t listenPort_;
 };
 

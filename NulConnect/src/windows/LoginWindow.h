@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/Dispatcher.h"
 #include "model/Types.h"
 #include "ui/Host.h"
 
@@ -19,13 +20,17 @@ public:
     explicit LoginWindow(WebLoginSession session);
     ~LoginWindow() override;
 
-    bool Create();
+    // A silent window is created hidden and stays that way while the SSO flow
+    // can complete by itself; it reports through onNeedsInteraction when the
+    // page waits for the user (or fails), and Show() then makes it visible.
+    bool Create(bool silent = false);
     void Show();
     uint64_t SessionId() const { return session_.id; }
 
     // Called once with the captured callback URL.
     std::function<void(const std::wstring&)> onCaptured;
     std::function<void()> onCancel;
+    std::function<void()> onNeedsInteraction;
 
     static std::wstring UserDataFolder();
     // Removes cookies and cache of the embedded browser (sign-out). Returns
@@ -47,6 +52,9 @@ private:
     void OnWebView2Unavailable();
     void Capture(const std::wstring& url);
     void Cancel();
+    void RequestInteraction();
+    void ScheduleSettleCheck();
+    void CheckForInput();
     void ShowError(const std::wstring& message, bool runtimeMissing);
     void UpdateBounds();
     void DoLayoutNow();
@@ -61,6 +69,9 @@ private:
     int messageFilter_ = 0;
     bool captured_ = false;
     bool finished_ = false;
+    bool silent_ = false;
+    Dispatcher::TimerId silentTimeout_ = 0;
+    Dispatcher::TimerId settleTimer_ = 0;
     std::shared_ptr<bool> alive_ = std::make_shared<bool>(true);
     ui::RectF webArea_{};
 };
