@@ -12,9 +12,8 @@ void Log(std::string_view message);
 void Log(std::wstring_view message);
 std::wstring LogFilePath();
 
-// Turns libreatrust's verbose log on or off and mirrors this log into it, so
-// the shared ProgramData NulConnect.log shows the app, the library and the
-// helper together. Call only after reatrust.dll has been loaded.
+// Turns libreatrust's verbose log on or off. The library writes to the same
+// NulConnect.log as this log. Call only after reatrust.dll has been loaded.
 void SetDiagnosticLogging(bool enabled);
 
 // Strips the query and fragment from a URL. SSO callbacks carry one-time

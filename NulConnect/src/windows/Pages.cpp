@@ -565,7 +565,7 @@ public:
 
         AddSection(Tr(L"Troubleshooting"));
         logging_ = AddCard(Icon::Info, Tr(L"Record Diagnostic Logs"),
-                           Tr(L"Also record detailed protocol and tunnel logs in the shared log folder. Turn this on only while investigating a problem."))
+                           Tr(L"Also record detailed protocol and tunnel logs. Turn this on only while investigating a problem."))
                        ->SetTrailing(std::make_unique<ToggleSwitch>());
         logging_->onChange = [this](bool on) { model_.UpdateSettings([on](AppSettings& s) { s.verboseLogging = on; }); };
         auto* logs = AddCard(Icon::Folder, Tr(L"Open Log Folder"), Tr(L"Diagnostic logs never contain passwords, tickets or session keys."));
@@ -573,6 +573,13 @@ public:
         logs->onClick = [] {
             std::wstring folder = JoinPath(LocalDataDirectory(), L"Logs");
             ShellExecuteW(nullptr, L"open", folder.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+        };
+        auto* helperLogs = AddCard(Icon::Folder, Tr(L"Open Helper Log Folder"), Tr(L"Logs written by the privileged component."));
+        helperLogs->SetClickable(true, Icon::Open);
+        helperLogs->onClick = [] {
+            wchar_t base[MAX_PATH] = {};
+            std::wstring folder = GetEnvironmentVariableW(L"ProgramData", base, MAX_PATH) ? JoinPath(JoinPath(base, L"NulConnect"), L"Logs") : L"";
+            if (!folder.empty()) ShellExecuteW(nullptr, L"open", folder.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
         };
         auto* reset = AddCard(Icon::Refresh, Tr(L"Reset Connection Settings"),
                               Tr(L"Restore the server address and client parameters to their defaults."));
