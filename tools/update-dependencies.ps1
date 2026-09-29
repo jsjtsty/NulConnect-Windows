@@ -10,11 +10,11 @@
 # already at the requested version is skipped unless -Force is given.
 #
 # Usage: powershell -ExecutionPolicy Bypass -File tools\update-dependencies.ps1
-#            [-LibreatrustVersion v0.3.5] [-HelperVersion v0.3.4] [-Force]
+#            [-LibreatrustVersion v0.3.5] [-HelperVersion v0.3.3] [-Force]
 # LIBREATRUST_VERSION / NULCONNECT_HELPER_VERSION override the defaults too.
 param(
     [string]$LibreatrustVersion = $(if ($env:LIBREATRUST_VERSION) { $env:LIBREATRUST_VERSION } else { "v0.3.5" }),
-    [string]$HelperVersion = $(if ($env:NULCONNECT_HELPER_VERSION) { $env:NULCONNECT_HELPER_VERSION } else { "v0.3.4" }),
+    [string]$HelperVersion = $(if ($env:NULCONNECT_HELPER_VERSION) { $env:NULCONNECT_HELPER_VERSION } else { "v0.3.3" }),
     [switch]$Force
 )
 

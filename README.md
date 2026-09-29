@@ -48,7 +48,7 @@ The prebuilt dependencies are stored under `lib\`, which is ignored by Git. `too
 | Dependency | Version | Source |
 |---|---|---|
 | [libreatrust](https://github.com/jsjtsty/libreatrust) | v0.3.5 | GitHub Releases |
-| [nulconnect-helper](https://github.com/jsjtsty/nulconnect-helper) | v0.3.4 | GitHub Releases |
+| [nulconnect-helper](https://github.com/jsjtsty/nulconnect-helper) | v0.3.3 | GitHub Releases |
 | [Wintun](https://www.wintun.net/) | 0.14.1 | wintun.net (SHA-256 pinned) |
 | [WebView2 SDK](https://www.nuget.org/packages/Microsoft.Web.WebView2) | 1.0.4191.47 | NuGet (SHA-256 pinned) |
 | [nlohmann/json](https://github.com/nlohmann/json) | v3.12.0 | GitHub Releases (SHA-256 pinned) |
@@ -56,7 +56,7 @@ The prebuilt dependencies are stored under `lib\`, which is ignored by Git. `too
 To test another compatible release of the Rust components:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File tools\update-dependencies.ps1 -LibreatrustVersion v0.3.5 -HelperVersion v0.3.4
+powershell -ExecutionPolicy Bypass -File tools\update-dependencies.ps1 -LibreatrustVersion v0.3.5 -HelperVersion v0.3.3
 ```
 
 The `LIBREATRUST_VERSION` and `NULCONNECT_HELPER_VERSION` environment variables work too. Pass `-Force` to download again.
