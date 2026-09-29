@@ -7,6 +7,7 @@ namespace nc::ui {
 namespace {
 
 constexpr UINT_PTR kCaretTimer = 0x4E43;
+constexpr UINT_PTR kFrameTimer = 0x4E44;
 constexpr DWORD kDwmUseImmersiveDarkMode = 20;
 constexpr DWORD kDwmUseImmersiveDarkModeOld = 19;
 constexpr DWORD kDwmSystemBackdropType = 38;
@@ -408,7 +409,11 @@ void Host::Render() {
         DiscardRenderTarget();
         return;
     }
-    if (frameRequested_) Invalidate();
+    // Animations pace themselves with a timer. Invalidating right away would
+    // keep a paint message pending forever, and WM_TIMER (which drives the
+    // Dispatcher's timers, such as the traffic sampling) is only delivered
+    // when no paint is pending.
+    if (frameRequested_ && hwnd_) SetTimer(hwnd_, kFrameTimer, 16, nullptr);
 }
 
 PointF Host::MousePoint(LPARAM lParam) const {
@@ -645,6 +650,11 @@ LRESULT Host::HandleMessage(UINT message, WPARAM wParam, LPARAM lParam) {
     case WM_IME_STARTCOMPOSITION:
         break;
     case WM_TIMER:
+        if (wParam == kFrameTimer) {
+            KillTimer(hwnd_, kFrameTimer);
+            Invalidate();
+            return 0;
+        }
         if (wParam == kCaretTimer) {
             caretVisible_ = !caretVisible_;
             Invalidate();
