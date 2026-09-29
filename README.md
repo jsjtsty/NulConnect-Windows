@@ -2,9 +2,21 @@
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPLv3-blue.svg)](LICENSE)
 
-NulConnect for Windows is a native Windows client for compatible secure access services. It is a port of the macOS [NulConnect](https://github.com/jsjtsty/NulConnect) app and provides the same authentication, session management, proxy access, and system-wide tunnel access.
+NulConnect for Windows is a third-party, open-source Windows client for **Sangfor aTrust** (深信服 aTrust) zero-trust access services. It provides a native desktop interface for logging in to an aTrust server, managing the session, and reaching the internal resources it publishes, either through a local proxy or through a system-wide tunnel. It is the Windows port of the macOS [NulConnect](https://github.com/jsjtsty/NulConnect) app.
 
-> **Status:** early development (0.1.0). Sign-in and proxy mode are working. The privileged helper, VPN mode, and the installer are still being tested.
+> **Disclaimer:** This is an unofficial project. It is not affiliated with, endorsed by, or supported by Sangfor Technologies. "aTrust" and "Sangfor" are trademarks of their respective owners. Use it only with services you are authorized to access.
+
+[简体中文](README.zh-CN.md)
+
+## Download
+
+Get the latest build from [Releases](https://github.com/jsjtsty/NulConnect-Windows/releases):
+
+- `NulConnect-<version>-setup.exe`: installer. Installs to `%ProgramFiles%\NulConnect` and registers the privileged helper service, so VPN mode needs no further authorization.
+- `NulConnect-<version>-win-x64.zip`: portable build. The app installs the helper on first use (one administrator prompt).
+- `SHA256SUMS.txt`: checksums of the files above.
+
+The binaries are not code-signed, so Windows SmartScreen may show a warning the first time you run them.
 
 ## Features
 
@@ -13,16 +25,19 @@ NulConnect for Windows is a native Windows client for compatible secure access s
 - Password, SMS, and web-based single sign-on (Microsoft Edge WebView2, with an Internet Explorer engine fallback)
 - Persistent session storage protected with DPAPI, and session resumption
 - Local proxy mode with optional Windows system-proxy integration, either for all traffic or through a PAC script that sends only intranet resources to the proxy
-- VPN/TUN mode for system-wide traffic routing, based on Wintun and per-domain DNS through NRPT
+- VPN/TUN mode for system-wide traffic routing, based on Wintun, per-domain DNS through NRPT, and fake-IP DNS so domain-based resources work
+- IPv4 tunnelling only; IPv6 packets are dropped rather than tunnelled
 - Silent re-login when the portal's single sign-on can finish without input, connect on launch, and cleanup of VPN state left by a crashed session
 - Notification-area icon with a quick-access flyout
+- Diagnostic logging switch, and one-click export of the logs as a zip file
+- Installer and portable builds
 - English, Simplified Chinese, Traditional Chinese, Japanese, German, French, and Spanish
 
-The application delegates protocol, authentication, resource, and transport operations to the [libreatrust](https://github.com/jsjtsty/libreatrust) Rust library. Privileged platform operations (the TUN adapter, routes, and DNS) are handled by [nulconnect-helper](https://github.com/jsjtsty/nulconnect-helper), which runs as a Windows service.
+The application delegates aTrust protocol, authentication, resource, and transport operations to the [libreatrust](https://github.com/jsjtsty/libreatrust) Rust library. Privileged platform operations (the TUN adapter, routes, and DNS) are handled by [nulconnect-helper](https://github.com/jsjtsty/nulconnect-helper), which runs as a Windows service.
 
 ## Requirements
 
-- Windows 10 or later, x64. Windows 7 support is planned.
+- Windows 10 or later, x64. Windows 7 is not supported.
 - [Microsoft Edge WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/) for web sign-in. Without it, the app falls back to the Internet Explorer engine.
 - Administrator authorization to install the helper, which VPN mode needs.
 
@@ -47,7 +62,7 @@ Both the app and the Rust components link the C runtime statically, so the Visua
 powershell -ExecutionPolicy Bypass -File tools\package.ps1
 ```
 
-Builds the Release configuration and writes two files to `dist\`: an [Inno Setup 6](https://jrsoftware.org/isinfo.php) installer (`installer\NulConnect.iss`; installs to `%ProgramFiles%\NulConnect` and registers the helper service) and a portable zip (the app installs the helper on first use). Use `-SkipBuild` to package an existing build.
+Builds the Release configuration and writes two files to `dist\`: an [Inno Setup 6](https://jrsoftware.org/isinfo.php) installer (`installer\NulConnect.iss`) and a portable zip. Use `-SkipBuild` to package an existing build. Releases are published from a local build with the `gh` command line tool.
 
 ## Dependencies
 
